@@ -48,9 +48,13 @@ demo.state50.createShipTrail = function() {
   shipTrail.setYSpeed(200, 180);
   shipTrail.setRotation(0, 0);
   // startAlpha, endAlpha, ms
-  shipTrail.setAlpha(1, 0.01, 1600); //800
+  // setAlpha(min, max, rate, ease, yoyo)
+  //   The rate (in ms) parameter, if set to a value above zero, lets you set the speed at which the Particle change in alpha from min to max.
+  // If rate is zero, which is the default, the particle won't change alpha - instead it will pick a random alpha between min and max on emit.
+  shipTrail.setAlpha(1, 0.01, 1500, Phaser.Easing.Quintic.Out); //800
   // minX, maxX, minY, maxY, rate, ease, yoyo
-  shipTrail.setScale(0.5, 2, 0.5, 2, 3000, Phaser.Easing.Quintic.Out);
+  // shipTrail.setScale(0.5, 2, 0.5, 2, 2000, Phaser.Easing.Quintic.Out);
+  shipTrail.setScale(0.5, 2, 0.5, 2, 2000, Phaser.Easing.Quintic.Out);
   shipTrail.start(false, 5000, 10);
 };
 
@@ -115,7 +119,6 @@ demo.state50.prototype = {
     ship = game.add.sprite(centerX, centerY, 'ship');
     ship.anchor.setTo(0.5, 0.5);
     ship.scale.setTo(0.2, 0.2);
-
 
     // Render emitters
 

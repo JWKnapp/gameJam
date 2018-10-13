@@ -5,4 +5,4 @@ game.state.add('state0', demo.state0);
 game.state.add('state50', demo.state50);
 
 // What state to start
-game.state.start('state50');
+game.state.start('state0');
