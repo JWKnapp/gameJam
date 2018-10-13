@@ -18,7 +18,10 @@ let demo = {},
     maxAngularVelocity: 200,
     score: 10,
   },
-  asteroidCount = asteroidProperties.startingAsteroids;
+  asteroidCount = asteroidProperties.startingAsteroids,
+  startingLives = 3,
+  timeToRespawn = 3,
+  currentLives
 
 // Particles
 let shipTrail;
@@ -67,6 +70,7 @@ demo.state0.preload = function() {
 };
 
 demo.state0.create = function() {
+  currentLives = game.add.text(20, 10, startingLives)
   game.physics.startSystem(Phaser.Physics.ARCADE);
   game.world.setBounds(0, 0, 2000, 1500);
   game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -186,6 +190,12 @@ demo.state0.resetAsteroids = function() {
 demo.state0.asteroidCollision = function(target, asteroid) {
   target.kill()
   asteroid.kill()
+
+  if(target.key == 'ship') {
+    startingLives --
+    currentLives.text = startingLives
+  }
+
 }
 
 demo.state0.prototype = {
