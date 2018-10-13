@@ -45,7 +45,11 @@ let demo = {},
     fill: '#FFFFFF',
     align: 'center',
   },
-  fuelCanisters
+  fuelCanisters,
+  meters,
+  fuel,
+  fuelTimer,
+  fuelLevel = 100
 
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
@@ -201,10 +205,12 @@ demo.state0.create = function() {
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
   demo.state0.resetAsteroids();
   currentLives = game.add.text(30, 20, startingLives, fontStuff);
-  // demo.state0.createFuelCanister('fuelCanister')
-  // demo.state0.queueCanister(game.rnd.integerInRange(2500, 10000))
+  demo.state0.createFuelBar()
+
+
   game.time.events.repeat(Phaser.Timer.SECOND * game.rnd.integerInRange(10, 30),50, demo.state0.createFuelCanister, this)
   // Particles
+
   demo.state0.createShipTrail();
   demo.state0.createShipExplosion();
   demo.state0.createAsteroidExplosion();
@@ -214,6 +220,14 @@ demo.state0.create = function() {
   bgMusic = game.add.audio('bgMusic', 1, true);
   bgMusic.play();
   shipExplodeSound = game.add.audio('blastwave');
+
+  //timer
+
+  fuelTimer = game.time.create(false);
+    fuelTimer.loop(5000, demo.state0.updateFuelBar, this);
+    fuelTimer.start();
+
+
 };
 
 demo.state0.update = function() {
@@ -268,6 +282,7 @@ demo.state0.update = function() {
     null,
     gameCxt
   )
+
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -378,6 +393,9 @@ demo.state0.asteroidCollision = function(target, asteroid) {
 demo.state0.canisterCollision = function(target, canister) {
   if(target.key === 'ship') {
     canister.kill()
+fuelLevel = 100
+demo.state0.updateFuelBar()
+Phaser.Keyboard.W.enabled = true
 
   }
 
@@ -399,6 +417,55 @@ demo.state0.resetShip = function() {
   ship.reset(centerX, centerY);
   ship.angle = 0;
 };
+
+demo.state0.createFuelBar = function() {
+
+  meters = game.add.group();
+
+  // create a plain black rectangle to use as the background of a health meter
+  var meterBackgroundBitmap = game.add.bitmapData(20, 100);
+  meterBackgroundBitmap.ctx.beginPath();
+  meterBackgroundBitmap.ctx.rect(0, 0, meterBackgroundBitmap.width, meterBackgroundBitmap.height);
+  meterBackgroundBitmap.ctx.fillStyle = '#000000';
+  meterBackgroundBitmap.ctx.fill();
+
+  // create a Sprite using the background bitmap data
+  var fuelMeterBG = game.add.sprite(10, 10, meterBackgroundBitmap);
+  fuelMeterBG.fixedToCamera = true;
+  meters.add(fuelMeterBG);
+
+  // create a red rectangle to use as the fuel meter
+  var fuelBitmap = game.add.bitmapData(12, 92);
+  fuelBitmap.ctx.beginPath();
+  fuelBitmap.ctx.rect(0, 0, fuelBitmap.width, fuelBitmap.height);
+  fuelBitmap.ctx.fillStyle = '#FF0000';
+  fuelBitmap.ctx.fill();
+
+  // create the fuel Sprite using the red rectangle bitmap data
+  fuel = game.add.sprite(14, 14, fuelBitmap);
+  meters.add(fuel);
+  fuel.fixedToCamera = true;
+
+}
+
+demo.state0.updateFuelBar = function() {
+console.log('fuel updated')
+  var m = (100 - fuelLevel) / 100;
+  var bh = 92 - (92 * m);
+  var offset = 92 - bh;
+
+  fuel.key.context.clearRect(0, 0, fuel.width, fuel.height);
+  fuel.key.context.fillRect(0, offset, 12, bh);
+  fuel.key.dirty = true;
+fuelLevel -=5
+}
+
+demo.state0.outOfFuel = function() {
+  if(fuelLevel = 0) {
+  console.log('out of fuel')
+  Phaser.Keyboard.W.enabled = false
+  }
+}
 
 demo.state0.prototype = {
   preload: demo.state0.preload,
