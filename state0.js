@@ -5,23 +5,23 @@ let demo = {},
   speed = 400,
   weapon,
   spawnAllowed = true,
-  asteroidGroup,
   asteroidProperties = {
     startingAsteroids: 4,
     maxAsteroids: 20,
     incrementAsteroids: 2,
+    asteroid :{minVelocity: 50, maxVelocity: 150, minAngularVelocity: 0, maxAngularVelocity: 200, score: 10, nextSize:'medAsteroid', pieces:2},
+    medAsteroid : {minVelocity: 50, maxVelocity: 200, minAngularVelocity: 0, maxAngularVelocity: 200, score: 50, nextSize: 'smallAsteroid', pieces:3},
+    smallAsteroid : {minVelocity: 50, maxVelocity: 300, minAngularVelocity: 0, maxAngularVelocity: 200, score: 100}
   },
-  mainAsteroid = {
-    minVelocity: 50,
-    maxVelocity: 150,
-    minAngularVelocity: 0,
-    maxAngularVelocity: 200,
-    score: 10,
-  },
+  asteroidGroup,
   asteroidCount = asteroidProperties.startingAsteroids,
   startingLives = 3,
   timeToRespawn = 3,
-  currentLives
+  currentLives,
+  fontStuff = {
+    font: '100px Arial', fill: '#FFFFFF', align: 'center'
+
+  }
 
 // Particles
 let shipTrail;
@@ -93,14 +93,15 @@ demo.state0.preload = function() {
   game.load.image('bullet', 'assets/sprites/bullet.png');
   game.load.image('space', 'assets/backgrounds/space.png');
   game.load.image('asteroid', 'assets/sprites/asteroid.png');
-
+  game.load.image('medAsteroid', 'assets/sprites/medAsteroid.png')
+  game.load.image('smallAsteroid', 'assets/sprites/smallAsteroid.png')
   // Load particle assets
   game.load.image('trailParticle', '/assets/particles/bullet.png');
   game.load.image('playerParticle', '/assets/particles/player-particle.png');
 };
 
 demo.state0.create = function() {
-  currentLives = game.add.text(20, 10, startingLives)
+
   game.physics.startSystem(Phaser.Physics.ARCADE);
   game.world.setBounds(0, 0, 2000, 1500);
   game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -124,7 +125,8 @@ demo.state0.create = function() {
   asteroidGroup.enableBody = true;
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
   demo.state0.resetAsteroids();
-
+  currentLives = game.add.text(30, 20, startingLives, fontStuff)
+  console.log('current lives', startingLives)
   // Particles
   demo.state0.createShipTrail();
 };
@@ -178,18 +180,22 @@ demo.state0.checkBoundaries = function(sprite) {
   }
 };
 
-demo.state0.createAsteroid = function(x, y, size) {
-  let asteroid = asteroidGroup.create(x, y, 'asteroid');
-  asteroid.anchor.set(0.5, 0.5);
-  asteroid.body.angularVelocity = game.rnd.integerInRange(
-    size.minAngularVelocity,
-    size.maxAngularVelocity
-  );
-  let randomAngle = game.math.degToRad(game.rnd.angle());
-  let randomVelocity = game.rnd.integerInRange(
-    size.minVelocity,
-    size.maxVelocity
-  );
+demo.state0.createAsteroid = function(x, y, size, pieces) {
+  if(pieces === undefined){pieces = 1}
+  console.log(asteroidProperties[size].pieces)
+  for(let i = 0; i < pieces; i++){
+    console.log('in da loop')
+    let asteroid = asteroidGroup.create(x, y, size);
+   asteroid.anchor.set(0.5, 0.5);
+   asteroid.body.angularVelocity = game.rnd.integerInRange(
+    asteroidProperties[size].minAngularVelocity,
+    asteroidProperties[size].maxAngularVelocity
+   );
+   let randomAngle = game.math.degToRad(game.rnd.angle());
+   let randomVelocity = game.rnd.integerInRange(
+     asteroidProperties[size].minVelocity,
+     asteroidProperties[size].maxVelocity
+   );
 
   game.physics.arcade.velocityFromRotation(
     randomAngle,
@@ -197,7 +203,8 @@ demo.state0.createAsteroid = function(x, y, size) {
     asteroid.body.velocity
   );
   console.log('asteroid created');
-};
+  };
+}
 
 demo.state0.resetAsteroids = function() {
   for (let i = 0; i < asteroidCount; i++) {
@@ -212,8 +219,8 @@ demo.state0.resetAsteroids = function() {
       x = Math.round(Math.random() * 2000);
       y = Math.round(Math.random() * 1500);
     }
-    console.log('inside reset asteroid', mainAsteroid);
-    this.createAsteroid(x, y, mainAsteroid);
+
+    this.createAsteroid(x, y, 'asteroid');
   }
 };
 
@@ -224,8 +231,24 @@ demo.state0.asteroidCollision = function(target, asteroid) {
   if(target.key == 'ship') {
     startingLives --
     currentLives.text = startingLives
+    if(startingLives > 0) {
+      game.time.events.add(Phaser.Timer.SECOND * timeToRespawn, demo.state0.resetShip, this)
+    }
   }
+  demo.state0.splitAsteroid(asteroid)
 
+},
+
+demo.state0.splitAsteroid = function(asteroid) {
+  console.log('asteroid to split', asteroid)
+if(asteroidProperties[asteroid.key].nextSize) {
+  demo.state0.createAsteroid(asteroid.x, asteroid.y, asteroidProperties[asteroid.key].nextSize, asteroidProperties[asteroid.key].pieces)
+}
+}
+
+demo.state0.resetShip = function() {
+  ship.reset(centerX, centerY)
+  ship.angle = 0
 }
 
 demo.state0.prototype = {
