@@ -185,7 +185,7 @@ demo.state0.preload = function() {
 
   // Load sounds
   // For Firefox can't use mp3
-  game.load.audio('bgMusic', 'assets/audio/dark-engine-demo.mp3');
+  game.load.audio('bgMusic', 'assets/audio/creeping-blob.mp3');
   game.load.audio('blastwave', 'assets/audio/blastwave.mp3');
   game.load.audio('splatSound', 'assets/audio/splat.mp3');
 };
