@@ -44,7 +44,8 @@ let demo = {},
     font: '100px Arial',
     fill: '#FFFFFF',
     align: 'center',
-  };
+  },
+  fuelCanisters;
 
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
@@ -93,6 +94,7 @@ demo.state0.createShipExplosion = function() {
   shipExplosion.gravity = 0;
 
   shipExplosion.setScale(5, 10, 5, 10, 2000, Phaser.Easing.Quintic.Out);
+  shipExplosion.setAlpha(1, 0, 3000);
 
   // Don't turn on the explosion unless meet certain conditions in the update()
 };
@@ -168,9 +170,10 @@ demo.state0.preload = function() {
   game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
   game.load.image('bullet', 'assets/sprites/bullet.png');
   game.load.image('space', 'assets/backgrounds/space.png');
-  game.load.image('asteroid', 'assets/sprites/asteroid.png');
-  game.load.image('medAsteroid', 'assets/sprites/medAsteroid.png');
-  game.load.image('smallAsteroid', 'assets/sprites/smallAsteroid.png');
+  game.load.image('asteroid', 'assets/sprites/eyeMonster.png');
+  game.load.image('medAsteroid', 'assets/sprites/medMonster.png');
+  game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png');
+  game.load.image('fuelCanister', 'assets/sprites/fuelCanister.png');
   // Load particle assets
   game.load.image('trailParticle', '/assets/particles/bullet.png');
   game.load.image('playerParticle', '/assets/particles/player-particle.png');
@@ -202,14 +205,22 @@ demo.state0.create = function() {
   weapon.trackSprite(ship, 20, 20, true);
   weapon.enableBody = true;
   weapon.physicsBodyType = Phaser.Physics.ARCADE;
-
+  fuelCanisters = game.add.group();
+  fuelCanisters.enableBody = true;
   asteroidGroup = game.add.group();
   asteroidGroup.enableBody = true;
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
-  game.physics.enable([asteroidGroup])
+  game.physics.enable([asteroidGroup]);
   demo.state0.resetAsteroids();
   currentLives = game.add.text(30, 20, startingLives, fontStuff);
-  console.log('current lives', startingLives);
+  // demo.state0.createFuelCanister('fuelCanister')
+  // demo.state0.queueCanister(game.rnd.integerInRange(2500, 10000))
+  game.time.events.repeat(
+    Phaser.Timer.SECOND * game.rnd.integerInRange(10, 30),
+    50,
+    demo.state0.createFuelCanister,
+    this
+  );
   // Particles
   demo.state0.createShipTrail();
   demo.state0.createShipExplosion();
@@ -223,7 +234,7 @@ demo.state0.create = function() {
   // key, volume = 1, loop? = false
   bgMusic = game.add.audio('bgMusic', 1, true);
   bgMusic.play();
-  shipExplodeSound = game.add.audio('blastwave', .5);
+  shipExplodeSound = game.add.audio('blastwave', 0.5);
   splatSound = game.add.audio('splatSound');
 };
 
@@ -231,9 +242,13 @@ demo.state0.asteroidsCollided = function(ast1, ast2) {
   // console.log('asteroidsCollided()')
   // game.add.tween(speakers.scale).to( { x: 1.3, y: 1.1 }, 230, "Sine.easeInOut", true, 0, -1, true);
   // Phaser.Tween.to(properties, duration, ease, autoStart, delay, repeat, yoyo)
-  game.add.tween(ast1.scale).to( { x: 1.5, y: 1.5 }, 400, "Sine.easeInOut", true, 0, 0, true);
-  game.add.tween(ast2.scale).to( { x: 1.5, y: 1.5 }, 400, "Sine.easeInOut", true, 0, 0, true);
-}
+  game.add
+    .tween(ast1.scale)
+    .to({ x: 1.5, y: 1.5 }, 400, 'Sine.easeInOut', true, 0, 0, true);
+  game.add
+    .tween(ast2.scale)
+    .to({ x: 1.5, y: 1.5 }, 400, 'Sine.easeInOut', true, 0, 0, true);
+};
 
 demo.state0.update = function() {
   const gameCxt = this;
@@ -301,6 +316,13 @@ demo.state0.update = function() {
   // if (astCollide) {
   //   console.log('asteroids collided')
   // }
+  game.physics.arcade.overlap(
+    ship,
+    fuelCanisters,
+    demo.state0.canisterCollision,
+    null,
+    gameCxt
+  );
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -317,6 +339,24 @@ demo.state0.checkBoundaries = function(sprite) {
     sprite.y = 0;
   }
 };
+
+demo.state0.createFuelCanister = function() {
+  if (spawnAllowed) {
+    let canister = fuelCanisters.create(
+      game.world.randomX,
+      game.world.randomY,
+      'fuelCanister'
+    );
+    canister.anchor.set(0.5, 0.5);
+    canister.scale.set(0.2, 0.2);
+    canister.angle = game.math.degToRad(game.rnd.angle());
+    console.log('canister created');
+  }
+};
+
+// demo.state0.queueCanister = function(time) {
+//   game.time.events.repeat(time, demo.state0.createFuelCanister('fuelCanister'), this)
+// }
 
 demo.state0.createAsteroid = function(x, y, size, pieces) {
   if (pieces === undefined) {
@@ -396,6 +436,12 @@ demo.state0.asteroidCollision = function(target, asteroid) {
 
     demo.state0.updateAsteroidExplosion(asteroid);
     demo.state0.splitAsteroid(asteroid);
+  }
+};
+
+demo.state0.canisterCollision = function(target, canister) {
+  if (target.key === 'ship') {
+    canister.kill();
   }
 };
 
