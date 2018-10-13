@@ -333,6 +333,10 @@ demo.state0.update = function() {
 
   );
 
+  //check for game over
+
+  demo.state0.gameOver()
+
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -521,6 +525,11 @@ demo.state0.outOfFuel = function() {
   if(fuelLevel = 0) {
   console.log('out of fuel')
   Phaser.Keyboard.W.enabled = false
+  }
+}
+demo.state0.gameOver = function() {
+  if(startingLives == 0) {
+    game.state.start('stateOver')
   }
 }
 
