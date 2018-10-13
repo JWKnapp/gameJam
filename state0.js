@@ -50,7 +50,7 @@ let demo = {},
 let shipTrail, shipExplosion, asteroidExplosion;
 
 // Sounds
-let bgMusic, shipExplodeSound;
+let bgMusic, shipExplodeSound, splatSound;
 
 demo.state0 = function() {};
 
@@ -171,6 +171,7 @@ demo.state0.preload = function() {
   // For Firefox can't use mp3
   game.load.audio('bgMusic', 'assets/audio/dark-engine-demo.mp3');
   game.load.audio('blastwave', 'assets/audio/blastwave.mp3');
+  game.load.audio('splatSound', 'assets/audio/splat.mp3');
 };
 
 demo.state0.create = function() {
@@ -209,6 +210,7 @@ demo.state0.create = function() {
   bgMusic = game.add.audio('bgMusic', 1, true);
   bgMusic.play();
   shipExplodeSound = game.add.audio('blastwave');
+  splatSound = game.add.audio('splatSound');
 };
 
 demo.state0.update = function() {
@@ -344,6 +346,9 @@ demo.state0.asteroidCollision = function(target, asteroid) {
   }
   // Else the asteroid has been shot
   else {
+    // Play sound
+    splatSound.play();
+
     demo.state0.updateAsteroidExplosion(asteroid);
     demo.state0.splitAsteroid(asteroid);
   }
