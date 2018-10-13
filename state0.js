@@ -23,8 +23,9 @@ let demo = {},
 
   }
 
-// Particles
-let shipTrail;
+
+// Particle emitters
+let shipTrail, shipExplosion, asteroidExplosion;
 
 demo.state0 = function() {};
 
@@ -58,7 +59,31 @@ demo.state0.createShipTrail = function() {
   shipTrail.start(false, 2000, 10);
 };
 
-demo.state0.updateParticles = function() {
+demo.state0.createShipExplosion = function() {
+  shipExplosion = game.add.emitter(ship.x, ship.y, 100);
+  shipExplosion.makeParticles('playerParticle');
+  shipExplosion.minParticleSpeed.setTo(-200, -200);
+  shipExplosion.maxParticleSpeed.setTo(200, 200);
+  shipExplosion.gravity = 0;
+
+  shipExplosion.setScale(5, 10, 5, 10, 2000, Phaser.Easing.Quintic.Out);
+
+  // Don't turn on the explosion unless meet certain conditions in the update()
+};
+
+demo.state0.createAsteroidExplosion = function() {
+  asteroidExplosion = game.add.emitter(ship.x, ship.y, 100);
+  asteroidExplosion.makeParticles('playerParticle');
+  asteroidExplosion.minParticleSpeed.setTo(-200, -200);
+  asteroidExplosion.maxParticleSpeed.setTo(200, 200);
+  asteroidExplosion.gravity = 0;
+
+  asteroidExplosion.setScale(5, 10, 5, 10, 2000, Phaser.Easing.Quintic.Out);
+
+  // Don't turn on the explosion unless meet certain conditions in the update()
+};
+
+demo.state0.updateShipTrail = function() {
   // Update the shipTrail to the ship's current position
   shipTrail.x = ship.x;
   shipTrail.y = ship.y;
@@ -67,13 +92,13 @@ demo.state0.updateParticles = function() {
   var velY = ship.body.velocity.y;
 
   // Turn the shipTrail off if ship speed below a certain threshold
-  const epsilon = 100
-  if (Math.abs(velX) < epsilon && Math.abs(velY) < epsilon) {
+  const epsilon = 100;
+  if (!ship.alive || (Math.abs(velX) < epsilon && Math.abs(velY) < epsilon)) {
     // console.log('ship not moving')
-    shipTrail.on = false
+    shipTrail.on = false;
   } else {
     // console.log('ship moving', velX, velY)
-    shipTrail.on = true
+    shipTrail.on = true;
   }
 
   velX *= -1;
@@ -84,6 +109,24 @@ demo.state0.updateParticles = function() {
 
   shipTrail.emitX = ship.x;
   shipTrail.emitY = ship.y;
+};
+
+demo.state0.updateShipExplosion = function() {
+  shipExplosion.x = ship.x;
+  shipExplosion.y = ship.y;
+  // shipExplosion.gravity = 0;
+};
+
+demo.state0.updateAsteroidExplosion = function(asteroid) {
+  // console.log('asteroid explosion', asteroid.x, asteroid.y)
+  asteroidExplosion.x = asteroid.x;
+  asteroidExplosion.y = asteroid.y;
+  asteroidExplosion.start(true, 1500, null, 50);
+};
+
+demo.state0.updateParticles = function() {
+  demo.state0.updateShipTrail();
+  demo.state0.updateShipExplosion();
 };
 
 // ================= PRELOAD, CREATE, UPDATE =====================
@@ -101,7 +144,6 @@ demo.state0.preload = function() {
 };
 
 demo.state0.create = function() {
-
   game.physics.startSystem(Phaser.Physics.ARCADE);
   game.world.setBounds(0, 0, 2000, 1500);
   game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -118,10 +160,10 @@ demo.state0.create = function() {
   weapon.bulletSpeed = speed;
   weapon.fireRate = 1000;
   weapon.trackSprite(ship, 20, 20, true);
-  weapon.enableBody = true
+  weapon.enableBody = true;
   weapon.physicsBodyType = Phaser.Physics.ARCADE;
 
-  asteroidGroup = this.game.add.group();
+  asteroidGroup = game.add.group();
   asteroidGroup.enableBody = true;
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
   demo.state0.resetAsteroids();
@@ -129,9 +171,12 @@ demo.state0.create = function() {
   console.log('current lives', startingLives)
   // Particles
   demo.state0.createShipTrail();
+  demo.state0.createShipExplosion();
+  demo.state0.createAsteroidExplosion();
 };
 
 demo.state0.update = function() {
+  const gameCxt = this;
   if (game.input.keyboard.isDown(Phaser.Keyboard.D)) {
     ship.body.angularVelocity = speed;
   } else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) {
@@ -161,8 +206,20 @@ demo.state0.update = function() {
   // Update particles
   demo.state0.updateParticles();
 
-  game.physics.arcade.overlap(weapon.bullets, asteroidGroup, demo.state0.asteroidCollision, null, this)
-  game.physics.arcade.overlap(ship, asteroidGroup, demo.state0.asteroidCollision, null, this)
+  game.physics.arcade.overlap(
+    weapon.bullets,
+    asteroidGroup,
+    demo.state0.asteroidCollision,
+    null,
+    gameCxt
+  );
+  game.physics.arcade.overlap(
+    ship,
+    asteroidGroup,
+    demo.state0.asteroidCollision,
+    null,
+    gameCxt
+  );
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -221,22 +278,25 @@ demo.state0.resetAsteroids = function() {
     }
 
     this.createAsteroid(x, y, 'asteroid');
+
   }
 };
 
+// If bullet or ship hits the collision
 demo.state0.asteroidCollision = function(target, asteroid) {
-  target.kill()
-  asteroid.kill()
-
+  target.kill();
+  asteroid.kill();
   if(target.key == 'ship') {
+     shipExplosion.start(true, 1000, null, 50);
     startingLives --
     currentLives.text = startingLives
     if(startingLives > 0) {
       game.time.events.add(Phaser.Timer.SECOND * timeToRespawn, demo.state0.resetShip, this)
     }
-  }
+  } else {
+    demo.state0.updateAsteroidExplosion(asteroid);
   demo.state0.splitAsteroid(asteroid)
-
+  }
 },
 
 demo.state0.splitAsteroid = function(asteroid) {
