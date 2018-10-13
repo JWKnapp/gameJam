@@ -3,7 +3,22 @@ let demo = {},
   centerY = 1500 / 2,
   ship,
   speed = 400,
-  weapon;
+  weapon,
+  spawnAllowed = true,
+  asteroidGroup,
+  asteroidProperties = {
+    startingAsteroids: 4,
+    maxAsteroids: 20,
+    incrementAsteroids: 2,
+  },
+  mainAsteroid = {
+    minVelocity: 50,
+    maxVelocity: 150,
+    minAngularVelocity: 0,
+    maxAngularVelocity: 200,
+    score: 10,
+  },
+  asteroidCount = asteroidProperties.startingAsteroids;
 
 // Particles
 let shipTrail;
@@ -36,8 +51,7 @@ demo.state0.updateParticles = function() {
   // Update the shipTrail to the ship's current position
   shipTrail.x = ship.x;
   shipTrail.y = ship.y;
-
-}
+};
 
 // ================= PRELOAD, CREATE, UPDATE =====================
 
@@ -45,6 +59,7 @@ demo.state0.preload = function() {
   game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
   game.load.image('bullet', 'assets/sprites/bullet.png');
   game.load.image('space', 'assets/backgrounds/space.png');
+  game.load.image('asteroid', 'assets/sprites/asteroid.png');
 
   // Load particle assets
   game.load.image('trailParticle', '/assets/particles/bullet.png');
@@ -63,10 +78,16 @@ demo.state0.create = function() {
   ship.body.drag.set(70);
   ship.animations.add('boost', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
   weapon = game.add.weapon(30, 'bullet');
+  // weapon.scale.setTo(10, 10);
   weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
   weapon.bulletSpeed = speed;
   weapon.fireRate = 1000;
   weapon.trackSprite(ship, 20, 20, true);
+
+  asteroidGroup = this.game.add.group();
+  asteroidGroup.enableBody = true;
+  asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
+  demo.state0.resetAsteroids();
 
   // Particles
   demo.state0.createShipTrail();
@@ -86,6 +107,7 @@ demo.state0.update = function() {
       300,
       ship.body.acceleration
     );
+
     ship.animations.play('boost', 10, true);
   } else {
     ship.animations.stop('boost');
@@ -96,9 +118,64 @@ demo.state0.update = function() {
     weapon.fire();
   }
   game.world.wrap(ship, 0, true);
+  asteroidGroup.forEachExists(demo.state0.checkBoundaries);
 
   // Update particles
   demo.state0.updateParticles();
+};
+
+demo.state0.checkBoundaries = function(sprite) {
+  if (sprite.x < 0) {
+    sprite.x = game.width;
+    console.log('moving sprite', game.width);
+  } else if (sprite.x > game.width) {
+    sprite.x = 0;
+    console.log('moving sprite', game.width);
+  }
+  if (sprite.y < 0) {
+    sprite.y = game.height;
+  } else if (sprite.y > game.height) {
+    sprite.y = 0;
+  }
+};
+
+demo.state0.createAsteroid = function(x, y, size) {
+  let asteroid = asteroidGroup.create(x, y, 'asteroid');
+  asteroid.anchor.set(0.5, 0.5);
+  asteroid.body.angularVelocity = game.rnd.integerInRange(
+    size.minAngularVelocity,
+    size.maxAngularVelocity
+  );
+  let randomAngle = game.math.degToRad(game.rnd.angle());
+  let randomVelocity = game.rnd.integerInRange(
+    size.minVelocity,
+    size.maxVelocity
+  );
+
+  game.physics.arcade.velocityFromRotation(
+    randomAngle,
+    randomVelocity,
+    asteroid.body.velocity
+  );
+  console.log('asteroid created');
+};
+
+demo.state0.resetAsteroids = function() {
+  for (let i = 0; i < asteroidCount; i++) {
+    let side = Math.round(Math.random());
+    let x;
+    let y;
+
+    if (side) {
+      x = Math.round(Math.random());
+      y = Math.round(Math.random() * 2000);
+    } else {
+      x = Math.round(Math.random() * 2000);
+      y = Math.round(Math.random() * 1500);
+    }
+    console.log('inside reset asteroid', mainAsteroid);
+    this.createAsteroid(x, y, mainAsteroid);
+  }
 };
 
 demo.state0.prototype = {
