@@ -110,8 +110,11 @@ demo.state50.prototype = {
     game.load.image('playerParticle', '/assets/particles/player-particle.png');
   },
   create: function() {
+
+
     var manager = game.plugins.add(Phaser.ParticleStorm);
 
+    game.physics.startSystem(Phaser.Physics.ARCADE);
     // Render the spaceship and bg
     game.world.setBounds(0, 0, 3000, 3000);
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -119,6 +122,7 @@ demo.state50.prototype = {
     ship = game.add.sprite(centerX, centerY, 'ship');
     ship.anchor.setTo(0.5, 0.5);
     ship.scale.setTo(0.2, 0.2);
+    game.physics.enable(ship);
 
     // Render emitters
 
