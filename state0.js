@@ -30,19 +30,27 @@ demo.state0 = function() {};
 
 demo.state0.createShipTrail = function() {
   shipTrail = game.add.emitter(ship.x, ship.y, 150);
-  shipTrail.width = 75;
+  shipTrail.gravity = 0;
+  shipTrail.width = 15;
   shipTrail.makeParticles('trailParticle');
   shipTrail.setXSpeed(30, -30);
   shipTrail.setYSpeed(200, 180);
   shipTrail.setRotation(0, 0);
-  shipTrail.gravity = 50;
   // setAlpha(min, max, rate, ease, yoyo)
   // The rate (in ms) parameter, if set to a value above zero, lets you set the speed at which the Particle change in alpha from min to max.
   // If rate is zero, which is the default, the particle won't change alpha - instead it will pick a random alpha between min and max on emit.
-  shipTrail.setAlpha(1, 0.01, 1500, Phaser.Easing.Quintic.Out); //800
+  // shipTrail.setAlpha(1, 0.01, 1500, Phaser.Easing.Quintic.Out); //800
   // minX, maxX, minY, maxY, rate, ease, yoyo
-  // shipTrail.setScale(0.5, 2, 0.5, 2, 2000, Phaser.Easing.Quintic.Out);
-  shipTrail.setScale(0.5, 2, 0.5, 2, 3000, Phaser.Easing.Quintic.Out);
+  // shipTrail.setScale(0.5, 2, 0.5, 2, 3000, Phaser.Easing.Quintic.Out);
+
+  shipTrail.setAlpha(1, 0, 3000);
+  shipTrail.setScale(0.8, 0, 0.8, 0, 3000);
+
+  // emitter.gravity = 200;
+  // emitter.setAlpha(1, 0, 3000);
+  // emitter.setScale(0.8, 0, 0.8, 0, 3000);
+  // emitter.start(false, 3000, 5);
+
   // true (single particle emission [single explosion]),
   // 1000 (last 1 sec),
   // null (for repeating emissions [how many per emission])
@@ -54,6 +62,28 @@ demo.state0.updateParticles = function() {
   // Update the shipTrail to the ship's current position
   shipTrail.x = ship.x;
   shipTrail.y = ship.y;
+
+  var velX = ship.body.velocity.x;
+  var velY = ship.body.velocity.y;
+
+  // Turn the shipTrail off if ship speed below a certain threshold
+  const epsilon = 100
+  if (Math.abs(velX) < epsilon && Math.abs(velY) < epsilon) {
+    // console.log('ship not moving')
+    shipTrail.on = false
+  } else {
+    // console.log('ship moving', velX, velY)
+    shipTrail.on = true
+  }
+
+  velX *= -1;
+  velY *= -1;
+
+  shipTrail.minParticleSpeed.set(velX, velY);
+  shipTrail.maxParticleSpeed.set(velX, velY);
+
+  shipTrail.emitX = ship.x;
+  shipTrail.emitY = ship.y;
 };
 
 // ================= PRELOAD, CREATE, UPDATE =====================
