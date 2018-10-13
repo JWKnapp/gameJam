@@ -18,7 +18,10 @@ let demo = {},
     maxAngularVelocity: 200,
     score: 10,
   },
-  asteroidCount = asteroidProperties.startingAsteroids;
+  asteroidCount = asteroidProperties.startingAsteroids,
+  startingLives = 3,
+  timeToRespawn = 3,
+  currentLives
 
 // Particles
 let shipTrail;
@@ -67,6 +70,7 @@ demo.state0.preload = function() {
 };
 
 demo.state0.create = function() {
+  currentLives = game.add.text(20, 10, startingLives)
   game.physics.startSystem(Phaser.Physics.ARCADE);
   game.world.setBounds(0, 0, 2000, 1500);
   game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -83,6 +87,8 @@ demo.state0.create = function() {
   weapon.bulletSpeed = speed;
   weapon.fireRate = 1000;
   weapon.trackSprite(ship, 20, 20, true);
+  weapon.enableBody = true
+  weapon.physicsBodyType = Phaser.Physics.ARCADE;
 
   asteroidGroup = this.game.add.group();
   asteroidGroup.enableBody = true;
@@ -122,6 +128,9 @@ demo.state0.update = function() {
 
   // Update particles
   demo.state0.updateParticles();
+
+  game.physics.arcade.overlap(weapon.bullets, asteroidGroup, demo.state0.asteroidCollision, null, this)
+  game.physics.arcade.overlap(ship, asteroidGroup, demo.state0.asteroidCollision, null, this)
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -177,6 +186,17 @@ demo.state0.resetAsteroids = function() {
     this.createAsteroid(x, y, mainAsteroid);
   }
 };
+
+demo.state0.asteroidCollision = function(target, asteroid) {
+  target.kill()
+  asteroid.kill()
+
+  if(target.key == 'ship') {
+    startingLives --
+    currentLives.text = startingLives
+  }
+
+}
 
 demo.state0.prototype = {
   preload: demo.state0.preload,
