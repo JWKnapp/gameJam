@@ -83,6 +83,8 @@ demo.state0.create = function() {
   weapon.bulletSpeed = speed;
   weapon.fireRate = 1000;
   weapon.trackSprite(ship, 20, 20, true);
+  weapon.enableBody = true
+  weapon.physicsBodyType = Phaser.Physics.ARCADE;
 
   asteroidGroup = this.game.add.group();
   asteroidGroup.enableBody = true;
@@ -122,6 +124,9 @@ demo.state0.update = function() {
 
   // Update particles
   demo.state0.updateParticles();
+
+  game.physics.arcade.overlap(weapon.bullets, asteroidGroup, demo.state0.asteroidCollision, null, this)
+  game.physics.arcade.overlap(ship, asteroidGroup, demo.state0.asteroidCollision, null, this)
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -177,6 +182,11 @@ demo.state0.resetAsteroids = function() {
     this.createAsteroid(x, y, mainAsteroid);
   }
 };
+
+demo.state0.asteroidCollision = function(target, asteroid) {
+  target.kill()
+  asteroid.kill()
+}
 
 demo.state0.prototype = {
   preload: demo.state0.preload,
