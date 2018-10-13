@@ -26,6 +26,9 @@ let demo = {},
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
 
+// Sounds
+let bgMusic, shipExplodeSound;
+
 demo.state0 = function() {};
 
 demo.state0.createShipTrail = function() {
@@ -139,6 +142,12 @@ demo.state0.preload = function() {
   // Load particle assets
   game.load.image('trailParticle', '/assets/particles/bullet.png');
   game.load.image('playerParticle', '/assets/particles/player-particle.png');
+
+  // Load sounds
+  // For Firefox can't use mp3
+  game.load.audio('bgMusic', 'assets/audio/dark-engine-demo.mp3');
+  game.load.audio('blastwave', 'assets/audio/blastwave.mp3');
+
 };
 
 demo.state0.create = function() {
@@ -171,6 +180,12 @@ demo.state0.create = function() {
   demo.state0.createShipTrail();
   demo.state0.createShipExplosion();
   demo.state0.createAsteroidExplosion();
+
+  // Sounds
+  // key, volume = 1, loop? = false
+  bgMusic = game.add.audio('bgMusic', 1, true);
+  bgMusic.play();
+  shipExplodeSound = game.add.audio('blastwave');
 };
 
 demo.state0.update = function() {
@@ -281,7 +296,9 @@ demo.state0.asteroidCollision = function(target, asteroid) {
 
   // If ship hits the asteroid
   if (target.key === 'ship') {
-    // Make ship explode
+    // Make ship explode sound
+    shipExplodeSound.play();
+    // Make ship explode particles
     shipExplosion.start(true, 1000, null, 50);
 
     // Decrement lives
