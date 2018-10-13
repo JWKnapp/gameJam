@@ -135,9 +135,9 @@ demo.state0.preload = function() {
   game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
   game.load.image('bullet', 'assets/sprites/bullet.png');
   game.load.image('space', 'assets/backgrounds/space.png');
-  game.load.image('asteroid', 'assets/sprites/asteroid.png');
-  game.load.image('medAsteroid', 'assets/sprites/medAsteroid.png')
-  game.load.image('smallAsteroid', 'assets/sprites/smallAsteroid.png')
+  game.load.image('asteroid', 'assets/sprites/eyeMonster.png');
+  game.load.image('medAsteroid', 'assets/sprites/medMonster.png')
+  game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png')
   // Load particle assets
   game.load.image('trailParticle', '/assets/particles/bullet.png');
   game.load.image('playerParticle', '/assets/particles/player-particle.png');
