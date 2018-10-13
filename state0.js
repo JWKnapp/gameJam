@@ -56,6 +56,7 @@ demo.state0 = function() {};
 
 demo.state0.createShipTrail = function() {
   shipTrail = game.add.emitter(ship.x, ship.y, 150);
+  // game.world.sendToBack(shipTrail);
   shipTrail.gravity = 0;
   shipTrail.width = 15;
   shipTrail.makeParticles('trailParticle');
@@ -81,7 +82,7 @@ demo.state0.createShipTrail = function() {
   // 1000 (last 1 sec),
   // null (for repeating emissions [how many per emission])
   // 100 particles on this single explosion
-  shipTrail.start(false, 2000, 10);
+  shipTrail.start(false, 3000, 10);
 };
 
 demo.state0.createShipExplosion = function() {
@@ -97,13 +98,16 @@ demo.state0.createShipExplosion = function() {
 };
 
 demo.state0.createAsteroidExplosion = function() {
-  asteroidExplosion = game.add.emitter(ship.x, ship.y, 100);
+  asteroidExplosion = game.add.emitter(ship.x, ship.y, 300);
   asteroidExplosion.makeParticles('playerParticle');
   asteroidExplosion.minParticleSpeed.setTo(-200, -200);
   asteroidExplosion.maxParticleSpeed.setTo(200, 200);
   asteroidExplosion.gravity = 0;
+  // Want explosion particles to bounce off stuff
+  asteroidExplosion.bounce.setTo(1);
 
-  asteroidExplosion.setScale(5, 10, 5, 10, 2000, Phaser.Easing.Quintic.Out);
+  asteroidExplosion.setScale(5, 10, 5, 10, 3000, Phaser.Easing.Quintic.Out);
+  asteroidExplosion.setAlpha(1, 0, 3000);
 
   // Don't turn on the explosion unless meet certain conditions in the update()
 };
@@ -144,9 +148,13 @@ demo.state0.updateShipExplosion = function() {
 
 demo.state0.updateAsteroidExplosion = function(asteroid) {
   // console.log('asteroid explosion', asteroid.x, asteroid.y)
+  // const didCollide = game.physics.arcade.overlap(ship, asteroidGroup, change, this)
+  // if (didCollide) {
+  //   console.log('particle collided')
+  // }
   asteroidExplosion.x = asteroid.x;
   asteroidExplosion.y = asteroid.y;
-  asteroidExplosion.start(true, 1500, null, 50);
+  asteroidExplosion.start(true, 3000, null, 50);
 };
 
 demo.state0.updateParticles = function() {
@@ -185,6 +193,7 @@ demo.state0.create = function() {
   game.physics.enable(ship);
   ship.body.drag.set(70);
   ship.animations.add('boost', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
+
   weapon = game.add.weapon(30, 'bullet');
   // weapon.scale.setTo(10, 10);
   weapon.bulletKillType = Phaser.Weapon.KILL_WORLD_BOUNDS;
@@ -197,6 +206,7 @@ demo.state0.create = function() {
   asteroidGroup = game.add.group();
   asteroidGroup.enableBody = true;
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
+  game.physics.enable([asteroidGroup])
   demo.state0.resetAsteroids();
   currentLives = game.add.text(30, 20, startingLives, fontStuff);
   console.log('current lives', startingLives);
@@ -205,13 +215,25 @@ demo.state0.create = function() {
   demo.state0.createShipExplosion();
   demo.state0.createAsteroidExplosion();
 
+  // Set layering of images and particles
+  // game.world.sendToBack(shipTrail);
+  game.world.bringToTop(ship);
+
   // Sounds
   // key, volume = 1, loop? = false
   bgMusic = game.add.audio('bgMusic', 1, true);
   bgMusic.play();
-  shipExplodeSound = game.add.audio('blastwave');
+  shipExplodeSound = game.add.audio('blastwave', .5);
   splatSound = game.add.audio('splatSound');
 };
+
+demo.state0.asteroidsCollided = function(ast1, ast2) {
+  // console.log('asteroidsCollided()')
+  // game.add.tween(speakers.scale).to( { x: 1.3, y: 1.1 }, 230, "Sine.easeInOut", true, 0, -1, true);
+  // Phaser.Tween.to(properties, duration, ease, autoStart, delay, repeat, yoyo)
+  game.add.tween(ast1.scale).to( { x: 1.5, y: 1.5 }, 400, "Sine.easeInOut", true, 0, 0, true);
+  game.add.tween(ast2.scale).to( { x: 1.5, y: 1.5 }, 400, "Sine.easeInOut", true, 0, 0, true);
+}
 
 demo.state0.update = function() {
   const gameCxt = this;
@@ -244,6 +266,7 @@ demo.state0.update = function() {
   // Update particles
   demo.state0.updateParticles();
 
+  // Collisions
   game.physics.arcade.overlap(
     weapon.bullets,
     asteroidGroup,
@@ -251,13 +274,33 @@ demo.state0.update = function() {
     null,
     gameCxt
   );
-  game.physics.arcade.overlap(
+  const collider = game.physics.arcade.overlap(
     ship,
     asteroidGroup,
     demo.state0.asteroidCollision,
     null,
     gameCxt
   );
+  // if (collider) {
+  //   console.log('collider collided')
+  // }
+
+  // asteroidExplosion.body.bounce.set(1)
+  // const didCollide = game.physics.arcade.collide(asteroidExplosion, asteroidGroup, change, null, gameCxt)
+  // if (didCollide) {
+  //   console.log('particle collided')
+  // }
+
+  const astCollide = game.physics.arcade.collide(
+    asteroidGroup,
+    asteroidGroup,
+    demo.state0.asteroidsCollided,
+    null,
+    gameCxt
+  );
+  // if (astCollide) {
+  //   console.log('asteroids collided')
+  // }
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -284,6 +327,8 @@ demo.state0.createAsteroid = function(x, y, size, pieces) {
     console.log('in da loop');
     let asteroid = asteroidGroup.create(x, y, size);
     asteroid.anchor.set(0.5, 0.5);
+    // Setting the asteroids to bounce off one another
+    asteroid.body.bounce.setTo(1);
     asteroid.body.angularVelocity = game.rnd.integerInRange(
       asteroidProperties[size].minAngularVelocity,
       asteroidProperties[size].maxAngularVelocity
@@ -324,7 +369,6 @@ demo.state0.resetAsteroids = function() {
 // If bullet or ship hits the collision
 demo.state0.asteroidCollision = function(target, asteroid) {
   target.kill();
-  asteroid.kill();
 
   // If ship hits the asteroid
   if (target.key === 'ship') {
@@ -346,6 +390,7 @@ demo.state0.asteroidCollision = function(target, asteroid) {
   }
   // Else the asteroid has been shot
   else {
+    asteroid.kill();
     // Play sound
     splatSound.play();
 
