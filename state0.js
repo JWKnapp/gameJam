@@ -11,13 +11,13 @@ let shipTrail;
 demo.state0 = function() {};
 
 demo.state0.createShipTrail = function() {
-  // let shipTrail;
-  shipTrail = game.add.emitter(ship.x, ship.y, 50);
+  shipTrail = game.add.emitter(ship.x, ship.y, 150);
   shipTrail.width = 75;
-  shipTrail.makeParticles('bullet');
+  shipTrail.makeParticles('trailParticle');
   shipTrail.setXSpeed(30, -30);
   shipTrail.setYSpeed(200, 180);
   shipTrail.setRotation(0, 0);
+  shipTrail.gravity = 50;
   // setAlpha(min, max, rate, ease, yoyo)
   // The rate (in ms) parameter, if set to a value above zero, lets you set the speed at which the Particle change in alpha from min to max.
   // If rate is zero, which is the default, the particle won't change alpha - instead it will pick a random alpha between min and max on emit.
@@ -32,6 +32,13 @@ demo.state0.createShipTrail = function() {
   shipTrail.start(false, 2000, 10);
 };
 
+demo.state0.updateParticles = function() {
+  // Update the shipTrail to the ship's current position
+  shipTrail.x = ship.x;
+  shipTrail.y = ship.y;
+
+}
+
 // ================= PRELOAD, CREATE, UPDATE =====================
 
 demo.state0.preload = function() {
@@ -40,7 +47,7 @@ demo.state0.preload = function() {
   game.load.image('space', 'assets/backgrounds/space.png');
 
   // Load particle assets
-  game.load.image('bullet', '/assets/particles/bullet.png');
+  game.load.image('trailParticle', '/assets/particles/bullet.png');
   game.load.image('playerParticle', '/assets/particles/player-particle.png');
 };
 
@@ -89,6 +96,9 @@ demo.state0.update = function() {
     weapon.fire();
   }
   game.world.wrap(ship, 0, true);
+
+  // Update particles
+  demo.state0.updateParticles();
 };
 
 demo.state0.prototype = {
