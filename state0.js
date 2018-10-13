@@ -20,20 +20,44 @@ let demo = {},
   },
   asteroidCount = asteroidProperties.startingAsteroids;
 
+// Particles
+let shipTrail;
+
 demo.state0 = function() {};
-demo.state0.prototype = {
-  preload: function() {
-    game.load.spritesheet(
-      'ship',
-      'assets/spriteSheets/shipSheet.png',
-      800,
-      500
-    );
-    game.load.image('bullet', 'assets/sprites/bullet.png');
-    game.load.image('space', 'assets/backgrounds/space.png');
-    game.load.image('asteroid', 'assets/sprites/asteroid.png');
-  },
-  create: function() {
+
+demo.state0.createShipTrail = function() {
+  // let shipTrail;
+  shipTrail = game.add.emitter(ship.x, ship.y, 50);
+  shipTrail.width = 75;
+  shipTrail.makeParticles('bullet');
+  shipTrail.setXSpeed(30, -30);
+  shipTrail.setYSpeed(200, 180);
+  shipTrail.setRotation(0, 0);
+  // setAlpha(min, max, rate, ease, yoyo)
+  // The rate (in ms) parameter, if set to a value above zero, lets you set the speed at which the Particle change in alpha from min to max.
+  // If rate is zero, which is the default, the particle won't change alpha - instead it will pick a random alpha between min and max on emit.
+  shipTrail.setAlpha(1, 0.01, 1500, Phaser.Easing.Quintic.Out); //800
+  // minX, maxX, minY, maxY, rate, ease, yoyo
+  // shipTrail.setScale(0.5, 2, 0.5, 2, 2000, Phaser.Easing.Quintic.Out);
+  shipTrail.setScale(0.5, 2, 0.5, 2, 3000, Phaser.Easing.Quintic.Out);
+  // true (single particle emission [single explosion]),
+  // 1000 (last 1 sec),
+  // null (for repeating emissions [how many per emission])
+  // 100 particles on this single explosion
+  shipTrail.start(false, 2000, 10);
+};
+
+// ================= PRELOAD, CREATE, UPDATE =====================
+
+(demo.state0.preload = function() {
+  game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
+  game.load.image('bullet', 'assets/sprites/bullet.png');
+  game.load.image('space', 'assets/backgrounds/space.png');
+  game.load.image('asteroid', 'assets/sprites/asteroid.png');
+  // Load particle assets
+  game.load.image('playerParticle', '/assets/particles/player-particle.png');
+}),
+  (demo.state0.create = function() {
     game.physics.startSystem(Phaser.Physics.ARCADE);
     game.world.setBounds(0, 0, 2000, 1500);
     game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -64,12 +88,16 @@ demo.state0.prototype = {
     weapon.bulletSpeed = speed;
     weapon.fireRate = 1000;
     weapon.trackSprite(ship, 20, 20, true);
+
     asteroidGroup = this.game.add.group();
     asteroidGroup.enableBody = true;
     asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
-    this.resetAsteroids();
-  },
-  update: function() {
+    demo.state0.resetAsteroids();
+
+    // Particles
+    demo.state0.createShipTrail();
+  }),
+  (demo.state0.update = function() {
     if (game.input.keyboard.isDown(Phaser.Keyboard.D)) {
       ship.body.angularVelocity = speed;
     } else if (game.input.keyboard.isDown(Phaser.Keyboard.A)) {
@@ -83,6 +111,7 @@ demo.state0.prototype = {
         300,
         ship.body.acceleration
       );
+
       ship.animations.play('boost', 10, true);
     } else {
       ship.animations.stop('boost');
@@ -93,26 +122,23 @@ demo.state0.prototype = {
       weapon.fire();
     }
     game.world.wrap(ship, 0, true);
-    // game.world.wrap(asteroidGroup, 0, true);
-    // asteroidGroup.x = Math.floor(Math.random() * 10);
-    // asteroidGroup.y = Math.floor(Math.random() * 10);
-    asteroidGroup.forEachExists(this.checkBoundaries, this);
-  },
-
-  checkBoundaries: function(sprite) {
+    asteroidGroup.forEachExists(demo.state0.checkBoundaries);
+  }),
+  (demo.state0.checkBoundaries = function(sprite) {
     if (sprite.x < 0) {
       sprite.x = game.width;
+      console.log('moving sprite', game.width);
     } else if (sprite.x > game.width) {
       sprite.x = 0;
+      console.log('moving sprite', game.width);
     }
     if (sprite.y < 0) {
       sprite.y = game.height;
     } else if (sprite.y > game.height) {
       sprite.y = 0;
     }
-  },
-
-  createAsteroid: function(x, y, size) {
+  }),
+  (demo.state0.createAsteroid = function(x, y, size) {
     let asteroid = asteroidGroup.create(x, y, 'asteroid');
     asteroid.anchor.set(0.5, 0.5);
     asteroid.body.angularVelocity = game.rnd.integerInRange(
@@ -131,9 +157,8 @@ demo.state0.prototype = {
       asteroid.body.velocity
     );
     console.log('asteroid created');
-  },
-
-  resetAsteroids: function() {
+  }),
+  (demo.state0.resetAsteroids = function() {
     for (let i = 0; i < asteroidCount; i++) {
       let side = Math.round(Math.random());
       let x;
@@ -149,5 +174,9 @@ demo.state0.prototype = {
       console.log('inside reset asteroid', mainAsteroid);
       this.createAsteroid(x, y, mainAsteroid);
     }
-  },
-};
+  }),
+  (demo.state0.prototype = {
+    preload: demo.state0.preload,
+    create: demo.state0.create,
+    update: demo.state0.update,
+  });
