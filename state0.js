@@ -49,8 +49,7 @@ let demo = {},
   meters,
   fuel,
   fuelTimer,
-  fuelLevel = 100
-
+  fuelLevel = 100;
 
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
@@ -180,8 +179,8 @@ demo.state0.preload = function() {
   game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png');
   game.load.image('fuelCanister', 'assets/sprites/fuelCanister.png');
   // Load particle assets
-  game.load.image('trailParticle', '/assets/particles/bullet.png');
-  game.load.image('playerParticle', '/assets/particles/player-particle.png');
+  game.load.image('trailParticle', 'assets/particles/bullet.png');
+  game.load.image('playerParticle', 'assets/particles/player-particle.png');
 
   // Load sounds
   // For Firefox can't use mp3
@@ -219,8 +218,13 @@ demo.state0.create = function() {
   demo.state0.resetAsteroids();
   currentLives = game.add.text(30, 20, startingLives, fontStuff);
 
-  demo.state0.createFuelBar()
-  game.time.events.repeat(Phaser.Timer.SECOND * game.rnd.integerInRange(10, 30),50, demo.state0.createFuelCanister, this)
+  demo.state0.createFuelBar();
+  game.time.events.repeat(
+    Phaser.Timer.SECOND * game.rnd.integerInRange(10, 30),
+    50,
+    demo.state0.createFuelCanister,
+    this
+  );
 
   // Particles
 
@@ -239,8 +243,8 @@ demo.state0.create = function() {
   //timer
 
   fuelTimer = game.time.create(false);
-    fuelTimer.loop(5000, demo.state0.updateFuelBar, this);
-    fuelTimer.start();
+  fuelTimer.loop(5000, demo.state0.updateFuelBar, this);
+  fuelTimer.start();
   shipExplodeSound = game.add.audio('blastwave', 0.5);
   splatSound = game.add.audio('splatSound');
 };
@@ -255,7 +259,6 @@ demo.state0.asteroidsCollided = function(ast1, ast2) {
   game.add
     .tween(ast2.scale)
     .to({ x: 1.5, y: 1.5 }, 400, 'Sine.easeInOut', true, 0, 0, true);
-
 };
 
 demo.state0.update = function() {
@@ -330,13 +333,11 @@ demo.state0.update = function() {
     demo.state0.canisterCollision,
     null,
     gameCxt
-
   );
 
   //check for game over
 
-  demo.state0.gameOver()
-
+  demo.state0.gameOver();
 };
 
 demo.state0.checkBoundaries = function(sprite) {
@@ -454,11 +455,11 @@ demo.state0.asteroidCollision = function(target, asteroid) {
 };
 
 demo.state0.canisterCollision = function(target, canister) {
-  if(target.key === 'ship') {
-    canister.kill()
-fuelLevel = 100
-demo.state0.updateFuelBar()
-Phaser.Keyboard.W.enabled = true
+  if (target.key === 'ship') {
+    canister.kill();
+    fuelLevel = 100;
+    demo.state0.updateFuelBar();
+    Phaser.Keyboard.W.enabled = true;
   }
 };
 
@@ -480,13 +481,17 @@ demo.state0.resetShip = function() {
 };
 
 demo.state0.createFuelBar = function() {
-
   meters = game.add.group();
 
   // create a plain black rectangle to use as the background of a health meter
   var meterBackgroundBitmap = game.add.bitmapData(20, 100);
   meterBackgroundBitmap.ctx.beginPath();
-  meterBackgroundBitmap.ctx.rect(0, 0, meterBackgroundBitmap.width, meterBackgroundBitmap.height);
+  meterBackgroundBitmap.ctx.rect(
+    0,
+    0,
+    meterBackgroundBitmap.width,
+    meterBackgroundBitmap.height
+  );
   meterBackgroundBitmap.ctx.fillStyle = '#000000';
   meterBackgroundBitmap.ctx.fill();
 
@@ -506,32 +511,31 @@ demo.state0.createFuelBar = function() {
   fuel = game.add.sprite(14, 14, fuelBitmap);
   meters.add(fuel);
   fuel.fixedToCamera = true;
-
-}
+};
 
 demo.state0.updateFuelBar = function() {
-console.log('fuel updated')
+  console.log('fuel updated');
   var m = (100 - fuelLevel) / 100;
-  var bh = 92 - (92 * m);
+  var bh = 92 - 92 * m;
   var offset = 92 - bh;
 
   fuel.key.context.clearRect(0, 0, fuel.width, fuel.height);
   fuel.key.context.fillRect(0, offset, 12, bh);
   fuel.key.dirty = true;
-fuelLevel -=5
-}
+  fuelLevel -= 5;
+};
 
 demo.state0.outOfFuel = function() {
-  if(fuelLevel = 0) {
-  console.log('out of fuel')
-  Phaser.Keyboard.W.enabled = false
+  if (fuelLevel === 0) {
+    console.log('out of fuel');
+    Phaser.Keyboard.W.enabled = false;
   }
-}
+};
 demo.state0.gameOver = function() {
-  if(startingLives == 0) {
-    game.state.start('stateOver')
+  if (startingLives === 0) {
+    game.state.start('stateOver');
   }
-}
+};
 
 demo.state0.prototype = {
   preload: demo.state0.preload,
