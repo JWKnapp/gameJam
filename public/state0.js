@@ -61,7 +61,6 @@ let demo = {},
   starCount = 20,
   starGroup
 
-
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
 
@@ -191,8 +190,8 @@ demo.state0.preload = function() {
   game.load.image('fuelCanister', 'assets/sprites/fuelCanister.png');
   game.load.image('star', 'assets/sprites/bullet.png')
   // Load particle assets
-  game.load.image('trailParticle', '/assets/particles/bullet.png');
-  game.load.image('playerParticle', '/assets/particles/player-particle.png');
+  game.load.image('trailParticle', 'assets/particles/bullet.png');
+  game.load.image('playerParticle', 'assets/particles/player-particle.png');
 
   // Load sounds
   // For Firefox can't use mp3
@@ -250,6 +249,7 @@ demo.state0.create = function() {
     fuelTimer.loop(5000, demo.state0.updateFuelBar, this);
     fuelTimer.start();
 
+
   // Particles
 
   demo.state0.createShipTrail();
@@ -278,7 +278,6 @@ demo.state0.asteroidsCollided = function(ast1, ast2) {
   game.add
     .tween(ast2.scale)
     .to({ x: 1.5, y: 1.5 }, 400, 'Sine.easeInOut', true, 0, 0, true);
-
 };
 
 demo.state0.update = function() {
@@ -354,13 +353,11 @@ demo.state0.update = function() {
     demo.state0.canisterCollision,
     null,
     gameCxt
-
   );
 
   //check for game over
 
-  demo.state0.gameOver()
-
+  demo.state0.gameOver();
 };
 
 // allow sprite to appear on other side of screen
@@ -487,11 +484,11 @@ demo.state0.asteroidCollision = function(target, asteroid) {
 
 //pick-up canister
 demo.state0.canisterCollision = function(target, canister) {
-  if(target.key === 'ship') {
-    canister.kill()
-fuelLevel = 100
-demo.state0.updateFuelBar()
-Phaser.Keyboard.W.enabled = true
+  if (target.key === 'ship') {
+    canister.kill();
+    fuelLevel = 100;
+    demo.state0.updateFuelBar();
+    Phaser.Keyboard.W.enabled = true;
   }
 };
 // asteroid splits
@@ -514,13 +511,17 @@ demo.state0.resetShip = function() {
 
 //fuel gauge creation
 demo.state0.createFuelBar = function() {
-
   meters = game.add.group();
 
   // create a plain black rectangle to use as the background of a health meter
   var meterBackgroundBitmap = game.add.bitmapData(20, 100);
   meterBackgroundBitmap.ctx.beginPath();
-  meterBackgroundBitmap.ctx.rect(0, 0, meterBackgroundBitmap.width, meterBackgroundBitmap.height);
+  meterBackgroundBitmap.ctx.rect(
+    0,
+    0,
+    meterBackgroundBitmap.width,
+    meterBackgroundBitmap.height
+  );
   meterBackgroundBitmap.ctx.fillStyle = '#000000';
   meterBackgroundBitmap.ctx.fill();
 
@@ -540,36 +541,37 @@ demo.state0.createFuelBar = function() {
   fuel = game.add.sprite(14, 14, fuelBitmap);
   meters.add(fuel);
   fuel.fixedToCamera = true;
-
-}
+};
 
 //update fuel to decrease steadily
 demo.state0.updateFuelBar = function() {
-console.log('fuel updated')
+  console.log('fuel updated');
   var m = (100 - fuelLevel) / 100;
-  var bh = 92 - (92 * m);
+  var bh = 92 - 92 * m;
   var offset = 92 - bh;
 
   fuel.key.context.clearRect(0, 0, fuel.width, fuel.height);
   fuel.key.context.fillRect(0, offset, 12, bh);
   fuel.key.dirty = true;
-fuelLevel -=5
-}
+  fuelLevel -= 5;
+};
 
 demo.state0.outOfFuel = function() {
   if(fuelLevel <= 0) {
   console.log('out of fuel')
   Phaser.Keyboard.W.enabled = false
   console.log(Phaser.Keyboard.W)
+
   }
-}
+};
 demo.state0.gameOver = function() {
   if(startingLives <= 0) {
     game.state.start('stateOver')
     bgMusic.destroy()
     startingLives = 3
+
   }
-}
+};
 
 demo.state0.prototype = {
   preload: demo.state0.preload,
