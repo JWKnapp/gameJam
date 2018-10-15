@@ -1,3 +1,11 @@
+
+
+// import game from './main'
+
+
+let game = new Phaser.Game(3000, 1500, Phaser.AUTO);
+
+
 let demo = {},
   centerX = 2000 / 2,
   centerY = 1500 / 2,
@@ -558,6 +566,8 @@ demo.state0.outOfFuel = function() {
 demo.state0.gameOver = function() {
   if(startingLives <= 0) {
     game.state.start('stateOver')
+    bgMusic.destroy()
+    startingLives = 3
   }
 }
 
@@ -566,3 +576,5 @@ demo.state0.prototype = {
   create: demo.state0.create,
   update: demo.state0.update,
 };
+
+export {game, demo}
