@@ -1,4 +1,5 @@
-import {game, demo} from './state0'
+
+import {game, demo} from './stateStartScreen'
 
 demo.stateOver = function() {};
 
