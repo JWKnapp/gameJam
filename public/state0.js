@@ -1,5 +1,13 @@
-let demo = {},
-  centerX = 2000 / 2,
+
+
+import {game, demo} from './stateStartScreen'
+
+
+// let game = new Phaser.Game(3000, 1500, Phaser.AUTO);
+
+
+// let demo = {},
+ let centerX = 2000 / 2,
   centerY = 1500 / 2,
   ship,
   speed = 400,
@@ -194,8 +202,8 @@ demo.state0.preload = function() {
 
 demo.state0.create = function() {
   game.physics.startSystem(Phaser.Physics.ARCADE);
-  game.world.setBounds(0, 0, 3000, 1500);
-  game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+  // game.world.setBounds(0, 0, 3000, 1500);
+  // game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
   // let spaceBG = game.add.sprite(0, 0, 'space');
 
   //create random stars
@@ -559,6 +567,8 @@ demo.state0.outOfFuel = function() {
 demo.state0.gameOver = function() {
   if(startingLives <= 0) {
     game.state.start('stateOver')
+    bgMusic.destroy()
+    startingLives = 3
 
   }
 };
@@ -568,3 +578,5 @@ demo.state0.prototype = {
   create: demo.state0.create,
   update: demo.state0.update,
 };
+
+export default demo.state0

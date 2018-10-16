@@ -1,4 +1,5 @@
 
+import {game, demo} from './stateStartScreen'
 
 demo.stateOver = function() {};
 
@@ -61,12 +62,15 @@ demo.stateOver.prototype = {
   update: function () {
 
        //reset game lives
-            startingLives = 3
+            // demo.startingLives = 3
           //the "click to restart" handler
           game.input.onTap.addOnce(function () {
-              bgMusic.destroy()
+              // demo.bgMusic.destroy()
           game.state.start('state0');});
 
   }
 };
+
+export default demo.stateOver
+
 
