@@ -1,16 +1,10 @@
-
-
 import {game, demo} from './stateStartScreen'
-
-
 // let game = new Phaser.Game(3000, 1500, Phaser.AUTO);
-
-
 // let demo = {},
  let centerX = 2000 / 2,
   centerY = 1500 / 2,
   ship,
-  speed = 400,
+  speed = 300,
   weapon,
   spawnAllowed = true,
   asteroidProperties = {
@@ -59,7 +53,8 @@ import {game, demo} from './stateStartScreen'
   fuelTimer,
   fuelLevel = 100,
   starCount = 20,
-  starGroup
+  starGroup,
+  asteroid
 
 // Particle emitters
 let shipTrail, shipExplosion, asteroidExplosion;
@@ -124,7 +119,6 @@ demo.state0.createAsteroidExplosion = function() {
 
   asteroidExplosion.setScale(5, 10, 5, 10, 3000, Phaser.Easing.Quintic.Out);
   asteroidExplosion.setAlpha(1, 0, 3000);
-
   // Don't turn on the explosion unless meet certain conditions in the update()
 };
 
@@ -184,7 +178,7 @@ demo.state0.preload = function() {
   game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
   game.load.image('bullet', 'assets/sprites/bullet.png');
   game.load.image('space', 'assets/backgrounds/space.png');
-  game.load.image('asteroid', 'assets/sprites/eyeMonster.png');
+  game.load.spritesheet('asteroid', 'assets/spriteSheets/eyeMonsterSheet.png', 320, 320);
   game.load.image('medAsteroid', 'assets/sprites/medMonster.png');
   game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png');
   game.load.image('fuelCanister', 'assets/sprites/fuelCanister.png');
@@ -219,6 +213,7 @@ demo.state0.create = function() {
   ship.body.drag.set(70);
   ship.animations.add('boost', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]);
 
+
   //ship gun
   weapon = game.add.weapon(30, 'bullet');
   // weapon.scale.setTo(10, 10);
@@ -240,6 +235,7 @@ demo.state0.create = function() {
   asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
   game.physics.enable([asteroidGroup]);
   demo.state0.resetAsteroids();
+  game.time.events.repeat(Phaser.Timer.SECOND * game.rnd.integerInRange(2, 10),500, demo.state0.blinkTimer, this)
 
   //life and fuel counters
   currentLives = game.add.text(30, 20, startingLives, fontStuff);
@@ -292,11 +288,7 @@ demo.state0.update = function() {
     ship.body.angularVelocity = 0;
   }
   if (game.input.keyboard.isDown(Phaser.Keyboard.W)) {
-    game.physics.arcade.accelerationFromRotation(
-      ship.rotation,
-      300,
-      ship.body.acceleration
-    );
+    game.physics.arcade.accelerationFromRotation(ship.rotation, speed, ship.body.acceleration);
     ship.animations.play('boost', 10, true);
   } else {
     ship.animations.stop('boost');
@@ -355,8 +347,10 @@ demo.state0.update = function() {
     gameCxt
   );
 
-  //check for game over
+  // check for out of fuel
+  demo.state0.outOfFuel()
 
+  //check for game over
   demo.state0.gameOver();
 };
 
@@ -364,10 +358,8 @@ demo.state0.update = function() {
 demo.state0.checkBoundaries = function(sprite) {
   if (sprite.x < 0) {
     sprite.x = game.width;
-    console.log('moving sprite', game.width);
   } else if (sprite.x > game.width) {
     sprite.x = 0;
-    console.log('moving sprite', game.width);
   }
   if (sprite.y < 0) {
     sprite.y = game.height;
@@ -385,18 +377,15 @@ demo.state0.createFuelCanister = function() {
       'fuelCanister'
     );
     canister.anchor.set(0.5, 0.5);
-    canister.scale.set(0.2, 0.2);
-    canister.angle = game.math.degToRad(game.rnd.angle());
+    canister.scale.set(0.3, 0.3);
     console.log('canister created');
   }
 };
 //create stars
 demo.state0.createStars = function () {
   for (let i = 0; i < starCount; i++) {
-    let star = starGroup.create(game.world.randomX,
-      game.world.randomY, 'star')
+    let star = starGroup.create(game.world.randomX, game.world.randomY, 'star')
     star.anchor.set(0.5, 0.5)
-    console.log('star Created', star)
   }
 }
 
@@ -405,31 +394,33 @@ demo.state0.createAsteroid = function(x, y, size, pieces) {
   if (pieces === undefined) {
     pieces = 1;
   }
-  console.log(asteroidProperties[size].pieces);
   for (let i = 0; i < pieces; i++) {
-    console.log('in da loop');
-    let asteroid = asteroidGroup.create(x, y, size);
+    asteroid = asteroidGroup.create(x, y, size);
     asteroid.anchor.set(0.5, 0.5);
     // Setting the asteroids to bounce off one another
     asteroid.body.bounce.setTo(1);
-    asteroid.body.angularVelocity = game.rnd.integerInRange(
-      asteroidProperties[size].minAngularVelocity,
-      asteroidProperties[size].maxAngularVelocity
-    );
+    asteroid.body.angularVelocity = game.rnd.integerInRange(asteroidProperties[size].minAngularVelocity, asteroidProperties[size].maxAngularVelocity);
     let randomAngle = game.math.degToRad(game.rnd.angle());
-    let randomVelocity = game.rnd.integerInRange(
-      asteroidProperties[size].minVelocity,
-      asteroidProperties[size].maxVelocity
-    );
+    let randomVelocity = game.rnd.integerInRange(asteroidProperties[size].minVelocity, asteroidProperties[size].maxVelocity);
 
-    game.physics.arcade.velocityFromRotation(
-      randomAngle,
-      randomVelocity,
-      asteroid.body.velocity
-    );
-    console.log('asteroid created');
+    game.physics.arcade.velocityFromRotation(randomAngle, randomVelocity, asteroid.body.velocity);
+      if(size === "asteroid") {
+        asteroid.animations.add('blink', [0,1,2,3,4,5,6])
+      }
   }
 };
+
+// blink handling
+demo.state0.blinkTimer = function() {
+    let randomNum = game.rnd.integerInRange(1,3)
+    game.time.events.add(Phaser.Timer.SECOND * randomNum, demo.state0.blink, this)
+}
+
+demo.state0.blink = function() {
+  let randomNum = game.rnd.integerInRange(0,3)
+  asteroidGroup.children[randomNum].animations.play('blink', 7, false)
+
+}
 
 demo.state0.resetAsteroids = function() {
   for (let i = 0; i < asteroidCount; i++) {
@@ -488,7 +479,7 @@ demo.state0.canisterCollision = function(target, canister) {
     canister.kill();
     fuelLevel = 100;
     demo.state0.updateFuelBar();
-    Phaser.Keyboard.W.enabled = true;
+    speed = 300
   }
 };
 // asteroid splits
@@ -507,6 +498,8 @@ demo.state0.splitAsteroid = function(asteroid) {
 demo.state0.resetShip = function() {
   ship.reset(centerX, centerY);
   ship.angle = 0;
+  fuelLevel = 100
+  speed = 300
 };
 
 //fuel gauge creation
@@ -545,25 +538,25 @@ demo.state0.createFuelBar = function() {
 
 //update fuel to decrease steadily
 demo.state0.updateFuelBar = function() {
-  console.log('fuel updated');
-  var m = (100 - fuelLevel) / 100;
-  var bh = 92 - 92 * m;
-  var offset = 92 - bh;
-
-  fuel.key.context.clearRect(0, 0, fuel.width, fuel.height);
-  fuel.key.context.fillRect(0, offset, 12, bh);
-  fuel.key.dirty = true;
-  fuelLevel -= 5;
+  if(fuelLevel => 0) {
+    console.log('fuel updated');
+    var m = (100 - fuelLevel) / 100;
+    var bh = 92 - 92 * m;
+    var offset = 92 - bh;
+    fuel.key.context.clearRect(0, 0, fuel.width, fuel.height);
+    fuel.key.context.fillRect(0, offset, 12, bh);
+    fuel.key.dirty = true;
+    fuelLevel -= 10;
+  }
 };
 
 demo.state0.outOfFuel = function() {
-  if(fuelLevel <= 0) {
+  if(fuelLevel < 0) {
+    speed = 50
   console.log('out of fuel')
-  Phaser.Keyboard.W.enabled = false
-  console.log(Phaser.Keyboard.W)
-
   }
 };
+
 demo.state0.gameOver = function() {
   if(startingLives <= 0) {
     game.state.start('stateOver')
