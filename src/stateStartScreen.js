@@ -1,4 +1,7 @@
-
+// const Phaser = require('phaser')
+import 'pixi';
+import 'p2';
+import Phaser from 'phaser'
 
 let game = new Phaser.Game(3000, 1500, Phaser.AUTO)
 

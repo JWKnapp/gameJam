@@ -1,4 +1,7 @@
 import {game, demo} from './stateStartScreen'
+import Phaser from 'phaser'
+
+
 // let game = new Phaser.Game(3000, 1500, Phaser.AUTO);
 // let demo = {},
  let centerX = 2000 / 2,
