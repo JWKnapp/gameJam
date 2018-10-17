@@ -177,7 +177,6 @@ demo.state0.updateParticles = function() {
 demo.state0.preload = function() {
   game.load.spritesheet('ship', 'assets/spriteSheets/shipSheet.png', 800, 500);
   game.load.image('bullet', 'assets/sprites/bullet.png');
-  game.load.image('space', 'assets/backgrounds/space.png');
   game.load.spritesheet('asteroid', 'assets/spriteSheets/eyeMonsterSheet.png', 320, 320);
   game.load.image('medAsteroid', 'assets/sprites/medMonster.png');
   game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png');
@@ -538,7 +537,7 @@ demo.state0.createFuelBar = function() {
 
 //update fuel to decrease steadily
 demo.state0.updateFuelBar = function() {
-  if(fuelLevel => 0) {
+  if(fuelLevel >= 0) { //asdf
     console.log('fuel updated');
     var m = (100 - fuelLevel) / 100;
     var bh = 92 - 92 * m;

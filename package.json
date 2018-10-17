@@ -6,8 +6,9 @@
     "node": ">= 7.0.0"
   },
   "scripts": {
-    "build-client": "webpack",
-    "build-client-watch": "webpack -w"
+    "build": "webpack --mode=development",
+    "build-production": "webpack --mode=production",
+    "build-watch": "webpack -w --mode=development"
   },
   "author": "Brandon Yee & Jehoshuah Knapp",
   "license": "MIT",

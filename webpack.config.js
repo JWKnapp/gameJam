@@ -3,7 +3,7 @@ module.exports = {
 
   entry: [
     '@babel/polyfill', // enables async-await
-    './public/main.js'
+    './src/main.js'
   ],
   output: {
     path: __dirname,
