@@ -114038,6 +114038,47 @@ function () {
 
     _classCallCheck(this, MainGame);
 
+    Object.defineProperty(this, "updateShipTrail", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: function value() {
+        // Update the shipTrail to the ship's current position
+        _this.shipTrail.x = _this.ship.x;
+        _this.shipTrail.y = _this.ship.y;
+        var velX = _this.ship.body.velocity.x;
+        var velY = _this.ship.body.velocity.y; // Turn the this.shipTrail off if this.ship speed below a certain threshold
+
+        var epsilon = 100;
+
+        if (!_this.ship.alive || Math.abs(velX) < epsilon && Math.abs(velY) < epsilon) {
+          // console.log('this.ship not moving')
+          _this.shipTrail.on = false;
+        } else {
+          // console.log('this.ship moving', velX, velY)
+          _this.shipTrail.on = true;
+        }
+
+        velX *= -1;
+        velY *= -1;
+
+        _this.shipTrail.minParticleSpeed.set(velX, velY);
+
+        _this.shipTrail.maxParticleSpeed.set(velX, velY);
+
+        _this.shipTrail.emitX = _this.ship.x;
+        _this.shipTrail.emitY = _this.ship.y;
+      }
+    });
+    Object.defineProperty(this, "updateShipExplosion", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: function value() {
+        _this.shipExplosion.x = _this.ship.x;
+        _this.shipExplosion.y = _this.ship.y; // shipExplosion.gravity = 0;
+      }
+    });
     Object.defineProperty(this, "checkBoundaries", {
       configurable: true,
       enumerable: true,
@@ -114054,6 +114095,64 @@ function () {
         } else if (sprite.y > _this.game.height) {
           sprite.y = 0;
         }
+      }
+    });
+    Object.defineProperty(this, "createAsteroid", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: function value(x, y, size, pieces) {
+        if (pieces === undefined) {
+          pieces = 1;
+        }
+
+        for (var i = 0; i < pieces; i++) {
+          var asteroid = _this.asteroidGroup.create(x, y, size);
+
+          asteroid.anchor.set(0.5, 0.5); // Setting the asteroids to bounce off one another
+
+          asteroid.body.bounce.setTo(1);
+          asteroid.body.angularVelocity = _this.game.rnd.integerInRange(_this.asteroidProperties[size].minAngularVelocity, _this.asteroidProperties[size].maxAngularVelocity);
+
+          var randomAngle = _this.game.math.degToRad(_this.game.rnd.angle());
+
+          var randomVelocity = _this.game.rnd.integerInRange(_this.asteroidProperties[size].minVelocity, _this.asteroidProperties[size].maxVelocity);
+
+          _this.game.physics.arcade.velocityFromRotation(randomAngle, randomVelocity, asteroid.body.velocity);
+
+          if (size === 'asteroid') {
+            asteroid.animations.add('blink', [0, 1, 2, 3, 4, 5, 6]);
+          }
+        }
+      }
+    });
+    Object.defineProperty(this, "canisterCollision", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: function value(target, canister) {
+        if (target.key === 'ship') {
+          canister.kill();
+          _this.fuelLevel = 100;
+
+          _this.updateFuelBar();
+
+          _this.speed = 300;
+        }
+      }
+    });
+    Object.defineProperty(this, "resetShip", {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: function value() {
+        console.log('inside resetShip', _this.ship);
+
+        _this.ship.reset(_this.centerX, _this.centerY);
+
+        _this.ship.angle = 0;
+        _this.fuelLevel = 100;
+        _this.speed = 300;
       }
     });
     this.game = game;
@@ -114304,38 +114403,6 @@ function () {
       this.asteroidExplosion.setAlpha(1, 0, 3000); // Don't turn on the explosion unless meet certain conditions in the update()
     }
   }, {
-    key: "updateShipTrail",
-    value: function updateShipTrail() {
-      // Update the shipTrail to the ship's current position
-      this.shipTrail.x = this.ship.x;
-      this.shipTrail.y = this.ship.y;
-      var velX = this.ship.body.velocity.x;
-      var velY = this.ship.body.velocity.y; // Turn the this.shipTrail off if this.ship speed below a certain threshold
-
-      var epsilon = 100;
-
-      if (!this.ship.alive || Math.abs(velX) < epsilon && Math.abs(velY) < epsilon) {
-        // console.log('this.ship not moving')
-        this.shipTrail.on = false;
-      } else {
-        // console.log('this.ship moving', velX, velY)
-        this.shipTrail.on = true;
-      }
-
-      velX *= -1;
-      velY *= -1;
-      this.shipTrail.minParticleSpeed.set(velX, velY);
-      this.shipTrail.maxParticleSpeed.set(velX, velY);
-      this.shipTrail.emitX = this.ship.x;
-      this.shipTrail.emitY = this.ship.y;
-    }
-  }, {
-    key: "updateShipExplosion",
-    value: function updateShipExplosion() {
-      this.shipExplosion.x = this.ship.x;
-      this.shipExplosion.y = this.ship.y; // shipExplosion.gravity = 0;
-    }
-  }, {
     key: "updateAsteroidExplosion",
     value: function updateAsteroidExplosion(asteroid) {
       // console.log('asteroid explosion', asteroid.x, asteroid.y)
@@ -114391,30 +114458,8 @@ function () {
     } //spawn asteroid
 
   }, {
-    key: "createAsteroid",
-    value: function createAsteroid(x, y, size, pieces) {
-      if (pieces === undefined) {
-        pieces = 1;
-      }
-
-      for (var i = 0; i < pieces; i++) {
-        var asteroid = this.asteroidGroup.create(x, y, size);
-        asteroid.anchor.set(0.5, 0.5); // Setting the asteroids to bounce off one another
-
-        asteroid.body.bounce.setTo(1);
-        asteroid.body.angularVelocity = this.game.rnd.integerInRange(this.asteroidProperties[size].minAngularVelocity, this.asteroidProperties[size].maxAngularVelocity);
-        var randomAngle = this.game.math.degToRad(this.game.rnd.angle());
-        var randomVelocity = this.game.rnd.integerInRange(this.asteroidProperties[size].minVelocity, this.asteroidProperties[size].maxVelocity);
-        this.game.physics.arcade.velocityFromRotation(randomAngle, randomVelocity, asteroid.body.velocity);
-
-        if (size === 'asteroid') {
-          asteroid.animations.add('blink', [0, 1, 2, 3, 4, 5, 6]);
-        }
-      }
-    } // blink handling
-
-  }, {
     key: "blinkTimer",
+    // blink handling
     value: function blinkTimer() {
       var randomNum = this.game.rnd.integerInRange(1, 3);
       this.game.time.events.add(_phaser.default.Timer.SECOND * randomNum, this.blink, this);
@@ -114460,7 +114505,9 @@ function () {
         this.currentLives.text = this.startingLives;
 
         if (this.startingLives > 0) {
-          this.game.time.events.add(_phaser.default.Timer.SECOND * this.imeToRespawn, this.resetShip, this);
+          console.log('inside collision: this: ', this);
+          console.log('this.reset ship', this.resetShip);
+          this.game.time.events.add(_phaser.default.Timer.SECOND * this.timeToRespawn, this.resetShip, this);
         }
       } // Else the asteroid has been shot
       else {
@@ -114473,18 +114520,8 @@ function () {
     } //pick-up canister
 
   }, {
-    key: "canisterCollision",
-    value: function canisterCollision(target, canister) {
-      if (target.key === 'ship') {
-        canister.kill();
-        this.fuelLevel = 100;
-        this.updateFuelBar();
-        this.speed = 300;
-      }
-    } // asteroid splits
-
-  }, {
     key: "splitAsteroid",
+    // asteroid splits
     value: function splitAsteroid(asteroid) {
       console.log('asteroid to split', asteroid);
 
@@ -114493,16 +114530,8 @@ function () {
       }
     }
   }, {
-    key: "resetShip",
-    value: function resetShip() {
-      this.ship.reset(this.centerX, this.centerY);
-      this.ship.angle = 0;
-      this.fuelLevel = 100;
-      this.speed = 300;
-    } //fuel gauge creation
-
-  }, {
     key: "createFuelBar",
+    //fuel gauge creation
     value: function createFuelBar() {
       this.meters = this.game.add.group(); // create a plain black rectangle to use as the background of a health meter
 
