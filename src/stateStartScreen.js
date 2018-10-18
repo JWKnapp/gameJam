@@ -29,7 +29,7 @@ class StartScreen {
     title.anchor.set(0.5);
     title.scale.set(4);
 
-    //game over text
+    //game start text
     let startGame = this.game.add.text(
       this.game.world.centerX,
       this.game.world.centerY + 200,
@@ -41,7 +41,7 @@ class StartScreen {
     startGame.align = 'center';
     startGame.fontSize = 70;
 
-    //game over relfection
+    //game start relfection
     let startGameReflect = this.game.add.text(
       this.game.world.centerX,
       this.game.world.centerY + 250,
@@ -64,6 +64,17 @@ class StartScreen {
     grd.addColorStop(0, 'rgba(255,255,255,0)');
     grd.addColorStop(1, 'rgba(255,255,255,0.08)');
     startGameReflect.fill = grd;
+
+    //credits
+    let credits = this.game.add.text(
+      this.game.world.centerX + 600,
+      this.game.world.centerY + 600,
+      'By: Jehoshuah Knapp & Brandon Yee',
+      { font: 'Arial', fill: '#F2F2F2' }
+    );
+    credits.anchor.set(0.5);
+    credits.align = 'center';
+    credits.fontSize = 60;
 
     this.game.world.setBounds(0, 0, 3000, 1500);
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
