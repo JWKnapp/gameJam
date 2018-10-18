@@ -70,9 +70,11 @@ class StartScreen {
   }
 
   update() {
+    const bgMusic = this.bgMusic
+    const game = this.game
     this.game.input.onTap.addOnce(function() {
-      this.bgMusic.destroy();
-      this.game.state.start('state0');
+      bgMusic.destroy();
+      game.state.start('mainGame');
     });
   }
 }

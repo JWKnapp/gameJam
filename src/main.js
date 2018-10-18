@@ -1,7 +1,7 @@
 import 'pixi';
 import 'p2';
 import Phaser from 'phaser';
-// import state0 from './state0'
+import {MainGame} from './mainGame'
 // import stateOver from './stateOver'
 import {StartScreen} from './stateStartScreen'
 
@@ -10,11 +10,13 @@ const game = new Phaser.Game(3000, 1500, Phaser.AUTO);
 
 const startScreen = new StartScreen(game);
 
+const mainGame = new MainGame(game)
+
 // start screen
 game.state.add('stateStartScreen', startScreen)
 
 //main game
-// game.state.add('state0', state0);
+game.state.add('mainGame', mainGame);
 
 // // Particles
 // game.state.add('state50', demo.state50);
