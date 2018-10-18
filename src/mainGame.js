@@ -184,13 +184,14 @@ class MainGame {
     // if (didCollide) {
     //   console.log('particle collided')
     // }
-    const astCollide = this.game.physics.arcade.collide(
-      this.asteroidGroup,
-      this.asteroidGroup,
-      this.asteroidsCollided,
-      null,
-      gameCxt
-    );
+    //********************************************************************** */
+    // const astCollide = this.game.physics.arcade.collide(
+    //   this.asteroidGroup,
+    //   this.asteroidGroup,
+    //   this.asteroidsCollided,
+    //   null,
+    //   gameCxt
+    // );
     // if (astCollide) {
     //   console.log('asteroids collided')
     // }
@@ -301,6 +302,7 @@ class MainGame {
       let asteroid = this.asteroidGroup.create(x, y, size);
       asteroid.anchor.set(0.5, 0.5);
       // Setting the asteroids to bounce off one another
+
       asteroid.body.bounce.setTo(1);
       asteroid.body.angularVelocity = this.game.rnd.integerInRange(
         this.asteroidProperties[size].minAngularVelocity,
@@ -317,6 +319,7 @@ class MainGame {
         asteroid.body.velocity
       );
       if (size === 'asteroid') {
+        asteroid.body.setCircle(160)
         asteroid.animations.add('blink', [0, 1, 2, 3, 4, 5, 6]);
       }
     }
@@ -467,7 +470,7 @@ class MainGame {
 
   gameOver() {
     if (this.startingLives <= 0) {
-      this.game.state.start('stateOver');
+      this.game.state.start('gameOver');
       this.bgMusic.destroy();
       this.startingLives = 3;
     }
