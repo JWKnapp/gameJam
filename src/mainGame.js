@@ -336,7 +336,7 @@ class MainGame {
     // Don't turn on the explosion unless meet certain conditions in the update()
   }
 
-  updateShipTrail() {
+  updateShipTrail = () => {
     // Update the shipTrail to the ship's current position
     this.shipTrail.x = this.ship.x;
     this.shipTrail.y = this.ship.y;
@@ -365,7 +365,7 @@ class MainGame {
     this.shipTrail.emitY = this.ship.y;
   }
 
-  updateShipExplosion() {
+  updateShipExplosion = () => {
     this.shipExplosion.x = this.ship.x;
     this.shipExplosion.y = this.ship.y;
     // shipExplosion.gravity = 0;
@@ -436,7 +436,7 @@ class MainGame {
     }
   }
   //spawn asteroid
-  createAsteroid(x, y, size, pieces) {
+  createAsteroid = (x, y, size, pieces) => {
     if (pieces === undefined) {
       pieces = 1;
     }
@@ -507,8 +507,10 @@ class MainGame {
       this.startingLives--;
       this.currentLives.text = this.startingLives;
       if (this.startingLives > 0) {
+        console.log('inside collision: this: ', this)
+        console.log('this.reset ship', this.resetShip)
         this.game.time.events.add(
-          Phaser.Timer.SECOND * this.imeToRespawn,
+          Phaser.Timer.SECOND * this.timeToRespawn,
           this.resetShip,
           this
         );
@@ -524,7 +526,7 @@ class MainGame {
     }
   }
   //pick-up canister
-  canisterCollision(target, canister) {
+  canisterCollision = (target, canister) => {
     if (target.key === 'ship') {
       canister.kill();
       this.fuelLevel = 100;
@@ -545,7 +547,8 @@ class MainGame {
     }
   }
 
-  resetShip() {
+  resetShip = () => {
+    console.log('inside resetShip', this.ship)
     this.ship.reset(this.centerX, this.centerY);
     this.ship.angle = 0;
     this.fuelLevel = 100;
