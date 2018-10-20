@@ -86,4 +86,4 @@ class StartScreen {
   }
 }
 
-export { StartScreen };
+export default StartScreen;

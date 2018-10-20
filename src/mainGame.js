@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import Ship from './objects/Ship'
-import Weapon from './objects/Weapon'
+import Ship from './objects/Ship';
+import Weapon from './objects/Weapon';
+import AsteroidGroup from './objects/AsteroidGroup'
 
 class MainGame {
   constructor(game) {
@@ -9,39 +10,10 @@ class MainGame {
     this.centerX = 3000 / 2;
     this.centerY = 1500 / 2;
     this.spawnAllowed = true;
-    this.asteroidProperties = {
-      startingAsteroids: 4,
-      maxAsteroids: 20,
-      incrementAsteroids: 2,
-      asteroid: {
-        minVelocity: 50,
-        maxVelocity: 150,
-        minAngularVelocity: 0,
-        maxAngularVelocity: 200,
-        score: 10,
-        nextSize: 'medAsteroid',
-        pieces: 2,
-      },
-      medAsteroid: {
-        minVelocity: 50,
-        maxVelocity: 200,
-        minAngularVelocity: 0,
-        maxAngularVelocity: 200,
-        score: 50,
-        nextSize: 'smallAsteroid',
-        pieces: 3,
-      },
-      smallAsteroid: {
-        minVelocity: 50,
-        maxVelocity: 300,
-        minAngularVelocity: 0,
-        maxAngularVelocity: 200,
-        score: 100,
-      },
-    };
+
     this.startingLives = 3;
     this.timeToRespawn = 3;
-    this.asteroidCount = this.asteroidProperties.startingAsteroids;
+
     this.fontStuff = {
       font: '100px Arial',
       fill: '#FFFFFF',
@@ -50,32 +22,25 @@ class MainGame {
     this.fuelLevel = 100;
     this.starCount = 20;
     this.ship = new Ship(game, this.centerX, this.centerY);
-    this.asteroidGroup = null;
+
+    this.asteroidGroup = new AsteroidGroup(game, this.ship);
+
     this.currentLives = null;
     this.fuelCanisters = null;
     this.meters = null;
     this.fuel = null;
     this.fuelTimer = null;
     this.starGroup = null;
-    this.asteroid = null;
+
     this.weapon = new Weapon(game, this.ship);
 
-    this.asteroidExplosion = null;
     this.bgMusic = null;
     this.splatSound = null;
 
-    this.independentObjects = [this.ship, this.weapon]
+    this.independentObjects = [this.ship, this.weapon, this.asteroidGroup];
   }
 
   preload() {
-    this.game.load.spritesheet(
-      'asteroid',
-      'assets/spriteSheets/eyeMonsterSheet.png',
-      320,
-      320
-    );
-    this.game.load.image('medAsteroid', 'assets/sprites/medMonster.png');
-    this.game.load.image('smallAsteroid', 'assets/sprites/smallMonster.png');
     this.game.load.image('fuelCanister', 'assets/sprites/fuelCanister.png');
     this.game.load.image('star', 'assets/sprites/bullet.png');
 
@@ -86,7 +51,7 @@ class MainGame {
 
     this.independentObjects.forEach(obj => {
       obj.preload();
-    })
+    });
   }
 
   create() {
@@ -102,7 +67,7 @@ class MainGame {
 
     this.independentObjects.forEach(obj => {
       obj.create();
-    })
+    });
 
     //random fuel cells
     this.fuelCanisters = this.game.add.group();
@@ -113,18 +78,15 @@ class MainGame {
       this.createFuelCanister,
       this
     );
-    //asteroid group
-    this.asteroidGroup = this.game.add.group();
-    this.asteroidGroup.enableBody = true;
-    this.asteroidGroup.physicsBodyType = Phaser.Physics.ARCADE;
-    this.game.physics.enable([this.asteroidGroup]);
-    this.resetAsteroids();
+
+    // **Continually adding new timers b/c blinkTimer adds a timer?
     this.game.time.events.repeat(
       Phaser.Timer.SECOND * this.game.rnd.integerInRange(2, 10),
       500,
-      this.blinkTimer,
-      this
+      this.asteroidGroup.blinkTimer,
+      this.asteroidGroup
     );
+
     //life and fuel counters
     this.currentLives = this.game.add.text(
       30,
@@ -138,39 +100,36 @@ class MainGame {
     this.fuelTimer.loop(5000, this.updateFuelBar, this);
     this.fuelTimer.start();
     // Particles
-    this.createAsteroidExplosion();
+    // this.createAsteroidExplosion();
     // Set layering of images and particles
     // game.world.sendToBack(shipTrail);
-    this.game.world.bringToTop(this.ship);
+    this.game.world.bringToTop(this.ship.sprite);
     // Sounds
     // key, volume = 1, loop? = false
     this.bgMusic = this.game.add.audio('bgMusic', 1, true);
     this.bgMusic.play();
-    // this.shipExplodeSound = this.game.add.audio('blastwave', 0.5);
     this.splatSound = this.game.add.audio('splatSound');
   }
 
   update() {
     const gameCxt = this;
-    const game = this.game;
+
     // //ship controller
     this.independentObjects.forEach(obj => {
       obj.update();
-    })
-
-    this.asteroidGroup.forEachExists(this.checkBoundaries);
+    });
 
     // Collisions
     this.game.physics.arcade.overlap(
       this.weapon.entity.bullets,
-      this.asteroidGroup,
+      this.asteroidGroup.group,
       this.asteroidCollision,
       null,
       gameCxt
     );
     const collider = this.game.physics.arcade.overlap(
       this.ship.sprite,
-      this.asteroidGroup,
+      this.asteroidGroup.group,
       this.asteroidCollision,
       null,
       gameCxt
@@ -208,43 +167,6 @@ class MainGame {
     this.gameOver();
   }
 
-
-  createAsteroidExplosion() {
-    this.asteroidExplosion = this.game.add.emitter(
-      this.ship.sprite.x,
-      this.ship.sprite.y,
-      300
-    );
-    this.asteroidExplosion.makeParticles('playerParticle');
-    this.asteroidExplosion.minParticleSpeed.setTo(-200, -200);
-    this.asteroidExplosion.maxParticleSpeed.setTo(200, 200);
-    this.asteroidExplosion.gravity = 0;
-    // Want explosion particles to bounce off stuff
-    this.asteroidExplosion.bounce.setTo(1);
-
-    this.asteroidExplosion.setScale(
-      5,
-      10,
-      5,
-      10,
-      3000,
-      Phaser.Easing.Quintic.Out
-    );
-    this.asteroidExplosion.setAlpha(1, 0, 3000);
-    // Don't turn on the explosion unless meet certain conditions in the update()
-  }
-
-  updateAsteroidExplosion(asteroid) {
-    // console.log('asteroid explosion', asteroid.x, asteroid.y)
-    // const didCollide = game.physics.arcade.overlap(ship, asteroidGroup, change, this)
-    // if (didCollide) {
-    //   console.log('particle collided')
-    // }
-    this.asteroidExplosion.x = asteroid.x;
-    this.asteroidExplosion.y = asteroid.y;
-    this.asteroidExplosion.start(true, 3000, null, 50);
-  }
-
   asteroidsCollided(ast1, ast2) {
     // console.log('asteroidsCollided()')
     // game.add.tween(speakers.scale).to( { x: 1.3, y: 1.1 }, 230, "Sine.easeInOut", true, 0, -1, true);
@@ -256,19 +178,7 @@ class MainGame {
       .tween(ast2.scale)
       .to({ x: 1.5, y: 1.5 }, 400, 'Sine.easeInOut', true, 0, 0, true);
   }
-  // allow sprite to appear on other side of screen
-  checkBoundaries = sprite => {
-    if (sprite.x < 0) {
-      sprite.x = this.game.width;
-    } else if (sprite.x > this.game.width) {
-      sprite.x = 0;
-    }
-    if (sprite.y < 0) {
-      sprite.y = this.game.height;
-    } else if (sprite.y > this.game.height) {
-      sprite.y = 0;
-    }
-  };
+
   //spawn fuel canister
   createFuelCanister() {
     if (this.spawnAllowed) {
@@ -293,67 +203,7 @@ class MainGame {
       star.anchor.set(0.5, 0.5);
     }
   }
-  //spawn asteroid
-  createAsteroid = (x, y, size, pieces) => {
-    if (pieces === undefined) {
-      pieces = 1;
-    }
-    for (let i = 0; i < pieces; i++) {
-      let asteroid = this.asteroidGroup.create(x, y, size);
-      asteroid.anchor.set(0.5, 0.5);
-      // Setting the asteroids to bounce off one another
 
-      asteroid.body.bounce.setTo(1);
-      asteroid.body.angularVelocity = this.game.rnd.integerInRange(
-        this.asteroidProperties[size].minAngularVelocity,
-        this.asteroidProperties[size].maxAngularVelocity
-      );
-      let randomAngle = this.game.math.degToRad(this.game.rnd.angle());
-      let randomVelocity = this.game.rnd.integerInRange(
-        this.asteroidProperties[size].minVelocity,
-        this.asteroidProperties[size].maxVelocity
-      );
-      this.game.physics.arcade.velocityFromRotation(
-        randomAngle,
-        randomVelocity,
-        asteroid.body.velocity
-      );
-      if (size === 'asteroid') {
-        asteroid.body.setCircle(160)
-        asteroid.animations.add('blink', [0, 1, 2, 3, 4, 5, 6]);
-      }
-    }
-  };
-  // blink handling
-  blinkTimer() {
-    let randomNum = this.game.rnd.integerInRange(1, 3);
-    this.game.time.events.add(
-      Phaser.Timer.SECOND * randomNum,
-      this.blink,
-      this
-    );
-  }
-
-  blink() {
-    let randomNum = this.game.rnd.integerInRange(0, 3);
-    this.asteroidGroup.children[randomNum].animations.play('blink', 7, false);
-  }
-
-  resetAsteroids() {
-    for (let i = 0; i < this.asteroidCount; i++) {
-      let side = Math.round(Math.random());
-      let x;
-      let y;
-      if (side) {
-        x = Math.round(Math.random());
-        y = Math.round(Math.random() * 2000);
-      } else {
-        x = Math.round(Math.random() * 2000);
-        y = Math.round(Math.random() * 1500);
-      }
-      this.createAsteroid(x, y, 'asteroid');
-    }
-  }
   // If bullet or ship hits the collision
   asteroidCollision(target, asteroid) {
     target.kill();
@@ -381,10 +231,11 @@ class MainGame {
       asteroid.kill();
       // Play sound
       this.splatSound.play();
-      this.updateAsteroidExplosion(asteroid);
-      this.splitAsteroid(asteroid);
+      this.asteroidGroup.updateAsteroidExplosion(asteroid);
+      this.asteroidGroup.splitAsteroid(asteroid);
     }
   }
+
   //pick-up canister
   canisterCollision = (target, canister) => {
     if (target.key === 'ship') {
@@ -394,26 +245,7 @@ class MainGame {
       this.ship.speed = 300;
     }
   };
-  // asteroid splits
-  splitAsteroid(asteroid) {
-    console.log('asteroid to split', asteroid);
-    if (this.asteroidProperties[asteroid.key].nextSize) {
-      this.createAsteroid(
-        asteroid.x,
-        asteroid.y,
-        this.asteroidProperties[asteroid.key].nextSize,
-        this.asteroidProperties[asteroid.key].pieces
-      );
-    }
-  }
 
-  // resetShip = () => {
-  //   console.log('inside resetShip', this.ship);
-  //   this.ship.reset(this.centerX, this.centerY);
-  //   this.ship.angle = 0;
-  //   this.fuelLevel = 100;
-  //   this.speed = 300;
-  // };
   //fuel gauge creation
   createFuelBar() {
     this.meters = this.game.add.group();
@@ -446,6 +278,7 @@ class MainGame {
     this.meters.add(this.fuel);
     this.fuel.fixedToCamera = true;
   }
+
   //update fuel to decrease steadily
   updateFuelBar() {
     if (this.fuelLevel >= 0) {
@@ -464,7 +297,7 @@ class MainGame {
   outOfFuel() {
     if (this.fuelLevel < 0) {
       this.ship.speed = 50;
-      console.log('out of fuel');
+      // console.log('out of fuel');
     }
   }
 
@@ -477,4 +310,4 @@ class MainGame {
   }
 }
 
-export { MainGame };
+export default MainGame;
